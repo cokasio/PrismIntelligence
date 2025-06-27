@@ -1,0 +1,101 @@
+# Environment variables - NEVER commit actual secrets
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.nuxt/
+.cache/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.c9/
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+test-results/
+junit.xml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+*.log
+
+# Database files
+*.sqlite
+*.sqlite3
+*.db
+
+# Uploaded files (in development)
+uploads/
+raw-reports/
+processed-reports/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.backup
+*.bak
+backup/
+
+# Documentation builds
+docs/_build/
+docs/.vuepress/dist/
+
+# Monitoring and debugging
+.vscode-debug/
+.chrome/
+*.heapsnapshot
+*.cpuprofile
+
+# Local configuration overrides
+config.local.js
+config.local.json
+
+# Security
+*.pem
+*.key
+*.cert
+*.crt
+
+# Python (for any ML/AI scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+ENV/
+
+# Terraform (if using infrastructure as code)
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Keep these files
+!.env.example
+!.gitkeep

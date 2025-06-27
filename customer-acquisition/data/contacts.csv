@@ -1,0 +1,17 @@
+contact_id,company_id,first_name,last_name,job_title,department,seniority_level,decision_maker_level,email_address,email_verified,phone_number,phone_verified,linkedin_profile_url,office_location,years_at_company,yardi_experience_level,consulting_budget_authority,preferred_contact_method,contact_status,priority_score
+1,1,Annette,Deluna,,,Other,Unknown,annette.deluna@12oaksseniorliving.com,FALSE,,,https://linkedin.com/in/annette-deluna,,,,FALSE,Email,Active,5
+2,1,Becca,Cline,,,Other,Unknown,becca.cline@12oaksseniorliving.com,FALSE,,,https://linkedin.com/in/becca-cline,,,,FALSE,Email,Active,5
+3,1,Catherine,Cole,,,Other,Unknown,catherine.cole@12oaksseniorliving.com,FALSE,,,https://linkedin.com/in/catherine-cole,,,,FALSE,Email,Active,5
+4,1,Elizabeth,Rivera,,,Other,Unknown,elizabeth.rivera@12oaksseniorliving.com,FALSE,,,https://linkedin.com/in/elizabeth-rivera,,,,FALSE,Email,Active,5
+5,1,Kathy,Brown,,,Other,Unknown,kathy.brown@12oaksseniorliving.com,FALSE,,,https://linkedin.com/in/kathy-brown,,,,FALSE,Email,Active,5
+6,2,Cheri,Palomino,,,Other,Unknown,cheri.palomino@33degrees.com,FALSE,,,https://linkedin.com/in/cheri-palomino,,,,FALSE,Email,Active,5
+7,2,David,Brossart,,,Other,Unknown,david.brossart@33degrees.com,FALSE,,,https://linkedin.com/in/david-brossart,,,,FALSE,Email,Active,5
+8,2,Donna,Goode,,,Other,Unknown,donna.goode@33degrees.com,FALSE,,,https://linkedin.com/in/donna-goode,,,,FALSE,Email,Active,5
+9,2,Tara,Vandall,,,Other,Unknown,tara.vandall@33degrees.com,FALSE,,,https://linkedin.com/in/tara-vandall,,,,FALSE,Email,Active,5
+10,6,Ansar,Khan,,,Other,Unknown,ansar.khan@zekelman.com,FALSE,,,https://linkedin.com/in/ansar-khan,,,,FALSE,Email,Active,5
+11,6,Erica,Gunnison,Senior Asset Manager,Asset Management,Manager,Secondary,erica.gunnison@zekelman.com,FALSE,,,https://linkedin.com/in/erica-gunnison,,,,TRUE,Email,Active,7
+12,6,Jack,Kouloukas,Power BI Analyst,Analytics,Analyst,Influencer,jack.kouloukas@zekelman.com,FALSE,,,https://linkedin.com/in/jack-kouloukas-8a668312a,,,,FALSE,Email,Active,6
+13,6,Manoah,Williams,Manager of Analytics,Analytics,Manager,Influencer,manoah.williams@z-modular.com,FALSE,,,https://linkedin.com/in/manoah,,,,FALSE,Email,Active,7
+14,6,Robert,Goldman,Director Asset Management,Asset Management,Director,Secondary,robert.goldman@z-modular.com,FALSE,925-788-XXXX,FALSE,https://linkedin.com/in/robertmgoldman,,,,TRUE,Email,Active,8
+15,7,Dan,Woodhead,Director,Technology,Director,Secondary,dan.woodhead@yardisystems.com,FALSE,,,https://linkedin.com/in/dan-woodhead,,,,TRUE,Email,Active,7
+

@@ -1,0 +1,561 @@
+import os
+import datetime
+import pandas as pd
+from typing import List, Dict, Tuple, Any
+import json
+
+# A2A Core imports
+from a2a.google.clients.llm_client import LLMClient
+from a2a.google.agents.agent import Agent, AgentRole
+from a2a.google.agents.dialogue import Dialogue, DialogueTurn
+from a2a.google.utils.chat_session import ChatSession
+
+# LLM Specific Client imports
+from a2a.google.clients.openai_client import OpenAIClient
+from a2a.google.clients.anthropic_client import AnthropicClient
+# Note: Google and DeepSeek clients may need to be implemented if not available
+
+# --- Configuration ---
+OPENAI_MODEL_NAME = "gpt-4o"
+CLAUDE_MODEL_NAME = "claude-3-sonnet-20240229"
+GOOGLE_MODEL_NAME = "gemini-pro"
+DEEPSEEK_MODEL_NAME = "deepseek-chat"
+
+OUTPUT_FILE_NAME = "financial_analysis_report.md"
+ANALYSIS_TOPIC = "comprehensive financial analysis of property management data for 2023-2024"
+
+# Financial data file paths
+INCOME_STATEMENT_FILE = "pm_gl_monthly_income_2023_2024.csv"
+BALANCE_SHEET_FILE = "pm_gl_monthly_balance_2023_2024.csv"
+CASH_FLOW_FILE = "pm_gl_monthly_cashflow_2023_2024.csv"
+
+# --- Financial Data Processing Classes ---
+class FinancialDataLoader:
+    """Loads and processes financial data from CSV files."""
+    
+    def __init__(self):
+        self.income_statement = None
+        self.balance_sheet = None
+        self.cash_flow = None
+        
+    def load_all_data(self) -> bool:
+        """Load all financial statements."""
+        try:
+            self.income_statement = pd.read_csv(INCOME_STATEMENT_FILE)
+            self.balance_sheet = pd.read_csv(BALANCE_SHEET_FILE)
+            self.cash_flow = pd.read_csv(CASH_FLOW_FILE)
+            return True
+        except Exception as e:
+            print(f"Error loading financial data: {e}")
+            return False
+    
+    def get_income_statement_summary(self) -> str:
+        """Generate summary of income statement data."""
+        if self.income_statement is None:
+            return "Income statement data not loaded."
+        
+        summary = f"Income Statement Data (24 months: 2023-2024)\n"
+        summary += f"Number of accounts: {len(self.income_statement)}\n"
+        summary += f"Key revenue accounts: Rent-Residential, Rent-Commercial\n"
+        summary += f"Major expense categories: Management, Payroll, Utilities, Maintenance\n"
+        
+        # Calculate total revenue and expenses for latest month
+        latest_month = '2024-12'
+        if latest_month in self.income_statement.columns:
+            revenue_accounts = ['4000', '4005', '4100', '4110', '4200', '4300', '4400']
+            expense_accounts = ['5000', '5100', '5200', '5210', '5300', '5310', '5400', '5500', '5600', '5700', '6000', '6100']
+            
+            total_revenue = 0
+            total_expenses = 0
+            
+            for _, row in self.income_statement.iterrows():
+                account = str(row['GL Account'])
+                value = row.get(latest_month, 0)
+                if account in revenue_accounts:
+                    total_revenue += value
+                elif account in expense_accounts:
+                    total_expenses += abs(value)  # Expenses are negative
+            
+            net_income = total_revenue - total_expenses
+            summary += f"\nLatest Month ({latest_month}):\n"
+            summary += f"Total Revenue: ${total_revenue:,.2f}\n"
+            summary += f"Total Expenses: ${total_expenses:,.2f}\n"
+            summary += f"Net Income: ${net_income:,.2f}\n"
+        
+        return summary
+    
+    def get_balance_sheet_summary(self) -> str:
+        """Generate summary of balance sheet data."""
+        if self.balance_sheet is None:
+            return "Balance sheet data not loaded."
+        
+        summary = f"Balance Sheet Data (24 months: 2023-2024)\n"
+        summary += f"Number of accounts: {len(self.balance_sheet)}\n"
+        
+        # Calculate key totals for latest month
+        latest_month = '2024-12'
+        if latest_month in self.balance_sheet.columns:
+            assets = 0
+            liabilities = 0
+            equity = 0
+            
+            for _, row in self.balance_sheet.iterrows():
+                account = str(row['GL Account'])
+                value = row.get(latest_month, 0)
+                
+                if account.startswith('1'):  # Assets
+                    assets += value
+                elif account.startswith('2'):  # Liabilities
+                    liabilities += abs(value)
+                elif account.startswith('3'):  # Equity
+                    equity += value
+            
+            summary += f"\nLatest Month ({latest_month}):\n"
+            summary += f"Total Assets: ${assets:,.2f}\n"
+            summary += f"Total Liabilities: ${liabilities:,.2f}\n"
+            summary += f"Total Equity: ${equity:,.2f}\n"
+            summary += f"Debt-to-Equity Ratio: {liabilities/equity:.2f}\n"
+        
+        return summary
+    
+    def get_cash_flow_summary(self) -> str:
+        """Generate summary of cash flow data."""
+        if self.cash_flow is None:
+            return "Cash flow data not loaded."
+        
+        summary = f"Cash Flow Data (24 months: 2023-2024)\n"
+        summary += f"Number of line items: {len(self.cash_flow)}\n"
+        
+        # Calculate cash flow metrics for latest month
+        latest_month = '2024-12'
+        if latest_month in self.cash_flow.columns:
+            net_income = 0
+            depreciation = 0
+            capex = 0
+            debt_payments = 0
+            distributions = 0
+            
+            for _, row in self.cash_flow.iterrows():
+                account = str(row['GL Account'])
+                value = row.get(latest_month, 0)
+                
+                if account == '9999':  # Net Income
+                    net_income = value
+                elif account == '6000':  # Depreciation
+                    depreciation = value
+                elif account == '5200':  # CapEx
+                    capex = abs(value)
+                elif account == '2100':  # Debt payments
+                    debt_payments = abs(value)
+                elif account == '3000':  # Distributions
+                    distributions = abs(value)
+            
+            free_cash_flow = net_income + depreciation - capex
+            
+            summary += f"\nLatest Month ({latest_month}):\n"
+            summary += f"Net Income: ${net_income:,.2f}\n"
+            summary += f"Depreciation: ${depreciation:,.2f}\n"
+            summary += f"Capital Expenditures: ${capex:,.2f}\n"
+            summary += f"Free Cash Flow: ${free_cash_flow:,.2f}\n"
+            summary += f"Debt Payments: ${debt_payments:,.2f}\n"
+            summary += f"Owner Distributions: ${distributions:,.2f}\n"
+        
+        return summary
+
+# --- Helper Functions ---
+def get_env_variable(var_name: str) -> str:
+    """Gets an environment variable or raises an error if not found."""
+    value = os.getenv(var_name)
+    if value is None:
+        raise ValueError(
+            f"Environment variable '{var_name}' not found. "
+            "Please set it before running the script."
+        )
+    return value
+
+def create_google_client(api_key: str) -> LLMClient:
+    """Create Google Gemini client - placeholder implementation."""
+    # Note: This would need actual Google client implementation
+    print("Warning: Google client not implemented, falling back to OpenAI")
+    return OpenAIClient(api_key=get_env_variable("OPENAI_API_KEY"), default_model_name=OPENAI_MODEL_NAME)
+
+def create_deepseek_client(api_key: str) -> LLMClient:
+    """Create DeepSeek client - placeholder implementation."""
+    # Note: This would need actual DeepSeek client implementation
+    print("Warning: DeepSeek client not implemented, falling back to Anthropic")
+    return AnthropicClient(api_key=get_env_variable("ANTHROPIC_API_KEY"), default_model_name=CLAUDE_MODEL_NAME)
+
+# --- Main Application Logic ---
+def main():
+    print("Starting Financial Analysis Multi-Agent System...\n")
+
+    # 1. Load Financial Data
+    print("Loading financial data...")
+    data_loader = FinancialDataLoader()
+    if not data_loader.load_all_data():
+        print("Failed to load financial data. Please check CSV files exist.")
+        return
+    
+    print("Financial data loaded successfully.")
+    print("\n" + "="*60)
+    print("FINANCIAL DATA OVERVIEW")
+    print("="*60)
+    print(data_loader.get_income_statement_summary())
+    print("\n" + "-"*40)
+    print(data_loader.get_balance_sheet_summary())
+    print("\n" + "-"*40)
+    print(data_loader.get_cash_flow_summary())
+    print("="*60 + "\n")
+
+    # 2. Load API Keys
+    try:
+        openai_api_key = get_env_variable("OPENAI_API_KEY")
+        anthropic_api_key = get_env_variable("ANTHROPIC_API_KEY")
+        google_api_key = get_env_variable("GOOGLE_API_KEY")
+        deepseek_api_key = get_env_variable("DEEPSEEK_API_KEY")
+    except ValueError as e:
+        print(f"Error: {e}")
+        print("Please ensure all API keys are set in .env file.")
+        return
+
+    # 3. Initialize LLM Clients
+    print("Initializing LLM clients...")
+    try:
+        openai_client = OpenAIClient(api_key=openai_api_key, default_model_name=OPENAI_MODEL_NAME)
+        claude_client = AnthropicClient(api_key=anthropic_api_key, default_model_name=CLAUDE_MODEL_NAME)
+        google_client = create_google_client(google_api_key)  # Placeholder implementation
+        deepseek_client = create_deepseek_client(deepseek_api_key)  # Placeholder implementation
+        print("LLM clients initialized successfully.\n")
+    except Exception as e:
+        print(f"Error initializing LLM clients: {e}")
+        return
+
+    # 4. Define Financial Analysis Agents
+    print("Defining financial analysis agents...")
+    
+    income_analyst = Agent(
+        name="IncomeAnalyst",
+        role=AgentRole(
+            role="Income Statement Analyst",
+            description=(
+                "You are a seasoned financial analyst specializing in income statement analysis. "
+                "You excel at identifying revenue trends, expense patterns, profitability metrics, "
+                "and operational efficiency indicators. You focus on understanding the property's "
+                "earning capacity and operational performance over time."
+            ),
+        ),
+        llm_client=openai_client,
+    )
+
+    balance_analyst = Agent(
+        name="BalanceAnalyst",
+        role=AgentRole(
+            role="Balance Sheet Analyst",
+            description=(
+                "You are an expert balance sheet analyst with deep expertise in asset management, "
+                "capital structure analysis, and financial position assessment. You specialize in "
+                "evaluating liquidity, solvency, leverage ratios, and overall financial health. "
+                "You understand how balance sheet changes impact long-term financial stability."
+            ),
+        ),
+        llm_client=claude_client,
+    )
+
+    cashflow_analyst = Agent(
+        name="CashFlowAnalyst",
+        role=AgentRole(
+            role="Cash Flow Analyst",
+            description=(
+                "You are a cash flow analysis specialist focused on understanding cash generation, "
+                "investment patterns, and financing activities. You excel at analyzing free cash flow, "
+                "capital allocation efficiency, and cash flow sustainability. You assess how well "
+                "the property generates and manages cash for operations, growth, and distributions."
+            ),
+        ),
+        llm_client=google_client,
+    )
+
+    strategic_advisor = Agent(
+        name="StrategicAdvisor",
+        role=AgentRole(
+            role="Strategic Financial Advisor",
+            description=(
+                "You are a strategic financial advisor who synthesizes insights from multiple "
+                "financial perspectives to provide comprehensive recommendations. You excel at "
+                "identifying strategic opportunities, assessing risks, and developing actionable "
+                "plans for financial optimization and growth. You take a holistic view of financial performance."
+            ),
+        ),
+        llm_client=deepseek_client,
+    )
+    
+    agents = [income_analyst, balance_analyst, cashflow_analyst, strategic_advisor]
+    print(f"Agents defined: {', '.join([agent.name for agent in agents])}\n")
+
+    # 5. Create Multi-Agent Dialogue
+    print("Creating financial analysis dialogue...")
+    dialogue = Dialogue(agents=agents)
+    print(f"Dialogue created with ID: {dialogue.dialogue_id}\n")
+
+    # 6. Execute Multi-Round Financial Analysis
+    print(f"--- Starting Financial Analysis: {ANALYSIS_TOPIC} ---\n")
+    
+    # Prepare financial data summaries for agents
+    income_data = data_loader.get_income_statement_summary()
+    balance_data = data_loader.get_balance_sheet_summary()
+    cashflow_data = data_loader.get_cash_flow_summary()
+    
+    analysis_results = {}
+    
+    # ROUND 1: Initial Domain-Specific Analysis
+    print("="*80)
+    print("ROUND 1: INITIAL DOMAIN-SPECIFIC ANALYSIS")
+    print("="*80)
+    
+    # Income Statement Analysis
+    income_prompt = (
+        f"As the Income Statement Analyst, please analyze the following property management "
+        f"income statement data for 2023-2024:\n\n{income_data}\n\n"
+        "Please provide your analysis focusing on:\n"
+        "1. Revenue trends and growth patterns\n"
+        "2. Expense management and cost structure\n"
+        "3. Profitability metrics and margins\n"
+        "4. Seasonal variations or notable changes\n"
+        "5. Key insights and concerns from an income statement perspective\n\n"
+        "Provide a detailed analysis with specific observations and recommendations."
+    )
+    
+    print(f"\n{income_analyst.name} is analyzing income statement data...")
+    income_turn = dialogue.send(
+        sender=income_analyst,
+        recipient=balance_analyst,  # Send to next analyst for context
+        message_content=income_prompt,
+    )
+    income_analysis = income_turn.message.content
+    analysis_results['income'] = income_analysis
+    print(f"\n{income_analyst.name} Analysis:")
+    print("-" * 40)
+    print(income_analysis[:500] + "..." if len(income_analysis) > 500 else income_analysis)
+    
+    # Balance Sheet Analysis
+    balance_prompt = (
+        f"As the Balance Sheet Analyst, please analyze the following property management "
+        f"balance sheet data for 2023-2024:\n\n{balance_data}\n\n"
+        f"Also consider this context from the Income Analyst: '{income_analysis[:300]}...'\n\n"
+        "Please provide your analysis focusing on:\n"
+        "1. Asset composition and utilization\n"
+        "2. Capital structure and leverage analysis\n"
+        "3. Liquidity and solvency assessment\n"
+        "4. Changes in financial position over time\n"
+        "5. Key insights and recommendations from a balance sheet perspective\n\n"
+        "Provide a detailed analysis with specific observations and recommendations."
+    )
+    
+    print(f"\n{balance_analyst.name} is analyzing balance sheet data...")
+    balance_turn = dialogue.send(
+        sender=balance_analyst,
+        recipient=cashflow_analyst,
+        message_content=balance_prompt,
+    )
+    balance_analysis = balance_turn.message.content
+    analysis_results['balance'] = balance_analysis
+    print(f"\n{balance_analyst.name} Analysis:")
+    print("-" * 40)
+    print(balance_analysis[:500] + "..." if len(balance_analysis) > 500 else balance_analysis)
+    
+    # Cash Flow Analysis
+    cashflow_prompt = (
+        f"As the Cash Flow Analyst, please analyze the following property management "
+        f"cash flow data for 2023-2024:\n\n{cashflow_data}\n\n"
+        f"Consider context from previous analyses:\n"
+        f"Income Analysis: '{income_analysis[:200]}...'\n"
+        f"Balance Analysis: '{balance_analysis[:200]}...'\n\n"
+        "Please provide your analysis focusing on:\n"
+        "1. Cash generation patterns and sustainability\n"
+        "2. Investment and capital expenditure efficiency\n"
+        "3. Financing activities and debt management\n"
+        "4. Free cash flow trends and distribution capacity\n"
+        "5. Key insights and recommendations from a cash flow perspective\n\n"
+        "Provide a detailed analysis with specific observations and recommendations."
+    )
+    
+    print(f"\n{cashflow_analyst.name} is analyzing cash flow data...")
+    cashflow_turn = dialogue.send(
+        sender=cashflow_analyst,
+        recipient=strategic_advisor,
+        message_content=cashflow_prompt,
+    )
+    cashflow_analysis = cashflow_turn.message.content
+    analysis_results['cashflow'] = cashflow_analysis
+    print(f"\n{cashflow_analyst.name} Analysis:")
+    print("-" * 40)
+    print(cashflow_analysis[:500] + "..." if len(cashflow_analysis) > 500 else cashflow_analysis)
+    
+    # ROUND 2: CROSS-ANALYSIS DISCUSSION
+    print("\n" + "="*80)
+    print("ROUND 2: CROSS-ANALYSIS DISCUSSION")
+    print("="*80)
+    
+    # Strategic Advisor facilitates cross-analysis discussion
+    cross_analysis_prompt = (
+        f"As the Strategic Advisor, I've reviewed all three domain analyses. Now let's have a "
+        f"cross-functional discussion to identify correlations, validate findings, and explore "
+        f"strategic implications.\n\n"
+        f"Key findings from each analyst:\n"
+        f"Income Analyst: {income_analysis[:300]}...\n"
+        f"Balance Analyst: {balance_analysis[:300]}...\n"
+        f"Cash Flow Analyst: {cashflow_analysis[:300]}...\n\n"
+        f"I'd like each analyst to respond to these questions:\n"
+        f"1. How do your findings correlate with the other analysts' observations?\n"
+        f"2. Do you see any conflicting indicators that need reconciliation?\n"
+        f"3. What strategic themes emerge when we combine all perspectives?\n"
+        f"4. What are the most critical issues requiring immediate attention?\n\n"
+        f"Let's start with the Income Analyst - how do the balance sheet and cash flow "
+        f"analyses support or challenge your income statement findings?"
+    )
+    
+    print(f"\n{strategic_advisor.name} is facilitating cross-analysis discussion...")
+    cross_turn1 = dialogue.send(
+        sender=strategic_advisor,
+        recipient=income_analyst,
+        message_content=cross_analysis_prompt,
+    )
+    cross_response1 = cross_turn1.message.content
+    print(f"\n{strategic_advisor.name} Discussion Facilitation:")
+    print("-" * 40)
+    print(cross_response1[:400] + "..." if len(cross_response1) > 400 else cross_response1)
+    
+    # Income Analyst responds to cross-analysis
+    income_cross_prompt = (
+        f"Thank you, {strategic_advisor.name}. Looking at the balance sheet and cash flow analyses, "
+        f"I can see several important correlations with my income statement findings.\n\n"
+        f"From the balance sheet perspective: {balance_analysis[:200]}...\n"
+        f"From the cash flow perspective: {cashflow_analysis[:200]}...\n\n"
+        f"These analyses help validate and expand on my income statement observations. "
+        f"Let me address the cross-analysis questions and highlight key correlations I see "
+        f"between revenue/expense trends and the balance sheet/cash flow patterns."
+    )
+    
+    cross_turn2 = dialogue.send(
+        sender=income_analyst,
+        recipient=balance_analyst,
+        message_content=income_cross_prompt,
+    )
+    income_cross_response = cross_turn2.message.content
+    analysis_results['income_cross'] = income_cross_response
+    print(f"\n{income_analyst.name} Cross-Analysis Response:")
+    print("-" * 40)
+    print(income_cross_response[:400] + "..." if len(income_cross_response) > 400 else income_cross_response)
+    
+    # ROUND 3: STRATEGIC INTEGRATION
+    print("\n" + "="*80)
+    print("ROUND 3: STRATEGIC INTEGRATION")
+    print("="*80)
+    
+    # Strategic Advisor synthesizes all insights
+    strategic_synthesis_prompt = (
+        f"Now I'll provide a comprehensive strategic synthesis of all our financial analyses. "
+        f"Based on the complete discussion, I'll develop an integrated assessment with "
+        f"strategic recommendations.\n\n"
+        f"Complete Analysis Context:\n"
+        f"- Initial Income Analysis: {income_analysis[:150]}...\n"
+        f"- Initial Balance Analysis: {balance_analysis[:150]}...\n"
+        f"- Initial Cash Flow Analysis: {cashflow_analysis[:150]}...\n"
+        f"- Cross-Analysis Insights: {income_cross_response[:150]}...\n\n"
+        f"My strategic synthesis will cover:\n"
+        f"1. Integrated Financial Health Assessment\n"
+        f"2. Key Strategic Themes and Patterns\n"
+        f"3. Critical Risk Factors and Opportunities\n"
+        f"4. Strategic Recommendations with Priorities\n"
+        f"5. Implementation Roadmap and Next Steps\n\n"
+        f"This will form the foundation for our final comprehensive report."
+    )
+    
+    print(f"\n{strategic_advisor.name} is developing strategic synthesis...")
+    strategic_turn = dialogue.send(
+        sender=strategic_advisor,
+        recipient=income_analyst,
+        message_content=strategic_synthesis_prompt,
+    )
+    strategic_synthesis = strategic_turn.message.content
+    analysis_results['strategic'] = strategic_synthesis
+    print(f"\n{strategic_advisor.name} Strategic Synthesis:")
+    print("-" * 40)
+    print(strategic_synthesis[:500] + "..." if len(strategic_synthesis) > 500 else strategic_synthesis)
+    
+    # ROUND 4: FINAL CONSENSUS AND REPORT GENERATION
+    print("\n" + "="*80)
+    print("ROUND 4: FINAL CONSENSUS AND REPORT GENERATION")
+    print("="*80)
+    
+    # Generate final comprehensive report
+    final_report_prompt = (
+        f"Based on our comprehensive four-round financial analysis, I need to generate the "
+        f"final financial analysis report. This report should synthesize all our findings "
+        f"into a professional, actionable document.\n\n"
+        f"The report should include:\n"
+        f"1. Executive Summary with key findings\n"
+        f"2. Detailed analysis from each domain (Income, Balance Sheet, Cash Flow)\n"
+        f"3. Strategic recommendations with priorities\n"
+        f"4. Risk assessment and mitigation strategies\n"
+        f"5. Action items and implementation timeline\n\n"
+        f"Please generate a comprehensive markdown report suitable for stakeholders."
+    )
+    
+    print(f"\n{strategic_advisor.name} is generating final report...")
+    report_response = strategic_advisor.llm_client.generate(
+        [{"role": "user", "content": final_report_prompt}],
+    )
+    final_report = report_response.text
+    
+    print(f"\n--- FINAL FINANCIAL ANALYSIS REPORT ---")
+    print("-" * 50)
+    print(final_report[:800] + "..." if len(final_report) > 800 else final_report)
+    
+    # 7. Write Comprehensive Report to File
+    try:
+        with open(OUTPUT_FILE_NAME, "w", encoding="utf-8") as f:
+            f.write(f"# Financial Analysis Report\n")
+            f.write(f"**Analysis Topic:** {ANALYSIS_TOPIC}\n")
+            f.write(f"**Analysis Date:** {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"**Participating Agents:** {', '.join([agent.name for agent in agents])}\n\n")
+            
+            f.write(f"## Financial Data Overview\n\n")
+            f.write(f"### Income Statement Summary\n{income_data}\n\n")
+            f.write(f"### Balance Sheet Summary\n{balance_data}\n\n")
+            f.write(f"### Cash Flow Summary\n{cashflow_data}\n\n")
+            
+            f.write(f"## Round 1: Domain-Specific Analyses\n\n")
+            f.write(f"### Income Statement Analysis ({income_analyst.name})\n")
+            f.write(f"{analysis_results['income']}\n\n")
+            f.write(f"### Balance Sheet Analysis ({balance_analyst.name})\n")
+            f.write(f"{analysis_results['balance']}\n\n")
+            f.write(f"### Cash Flow Analysis ({cashflow_analyst.name})\n")
+            f.write(f"{analysis_results['cashflow']}\n\n")
+            
+            f.write(f"## Round 2: Cross-Analysis Discussion\n\n")
+            f.write(f"### Cross-Analysis Insights\n")
+            f.write(f"{analysis_results.get('income_cross', 'Cross-analysis pending...')}\n\n")
+            
+            f.write(f"## Round 3: Strategic Integration\n\n")
+            f.write(f"### Strategic Synthesis ({strategic_advisor.name})\n")
+            f.write(f"{analysis_results['strategic']}\n\n")
+            
+            f.write(f"## Final Comprehensive Report\n\n")
+            f.write(final_report)
+            
+        print(f"\nSuccessfully wrote comprehensive financial analysis to '{OUTPUT_FILE_NAME}'")
+    except IOError as e:
+        print(f"Error writing to file '{OUTPUT_FILE_NAME}': {e}")
+    
+    print(f"\n" + "="*80)
+    print("FINANCIAL ANALYSIS COMPLETE")
+    print("="*80)
+    print(f"✓ Analyzed 3 financial statements with 4 specialized agents")
+    print(f"✓ Completed 4-round comprehensive analysis")
+    print(f"✓ Generated strategic recommendations and action items")
+    print(f"✓ Created comprehensive report: {OUTPUT_FILE_NAME}")
+    print("="*80)
+
+if __name__ == "__main__":
+    main()

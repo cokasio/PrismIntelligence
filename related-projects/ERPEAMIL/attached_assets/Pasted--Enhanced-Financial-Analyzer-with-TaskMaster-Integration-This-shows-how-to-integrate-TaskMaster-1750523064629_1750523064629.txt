@@ -1,0 +1,131 @@
+"""
+Enhanced Financial Analyzer with TaskMaster Integration
+This shows how to integrate TaskMaster with your existing financial analysis workflow
+"""
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import os
+
+# Import the taskmaster integration
+from financial_analysis_taskmaster import FinancialAnalysisTaskmaster
+
+
+class EnhancedFinancialAnalyzer:
+    """Financial analyzer with integrated task management"""
+    
+    def __init__(self):
+        self.taskmaster = FinancialAnalysisTaskmaster()
+        self.data = {}
+        
+    def analyze_income_statement(self, csv_path: str):
+        """Analyze income statement with task tracking"""
+        # Track the start of this analysis
+        self.taskmaster.track_analysis_progress(
+            "revenue",
+            {"status": "Loading data", "file": csv_path}
+        )
+        
+        # Load and analyze data
+        try:
+            df = pd.read_csv(csv_path)
+            
+            # Perform analysis
+            revenue_metrics = {
+                "total_revenue": df['Amount'].sum() if 'Amount' in df.columns else 0,
+                "average_monthly": df.groupby('Month')['Amount'].sum().mean() if 'Month' in df.columns else 0,
+                "revenue_growth": self._calculate_growth_rate(df),
+                "top_categories": self._get_top_categories(df)
+            }
+            
+            # Update progress
+            self.taskmaster.track_analysis_progress(
+                "revenue",
+                revenue_metrics
+            )
+            
+            # Complete the task
+            self.taskmaster.complete_analysis_task(
+                "revenue",
+                {
+                    "metrics": revenue_metrics,
+                    "analysis_date": datetime.now().isoformat(),
+                    "recommendations": self._generate_recommendations(revenue_metrics)
+                }
+            )
+            
+            # Record AI interaction if using AI for insights
+            self.taskmaster.context_manager.add_ai_interaction(
+                task_id="revenue_analysis",
+                prompt="Analyze revenue trends and provide insights",
+                response=f"Revenue analysis completed. Total: ${revenue_metrics['total_revenue']:,.2f}",
+                model="claude"
+            )
+            
+            return revenue_metrics
+        except Exception as e:
+            # Track failure
+            self.taskmaster.track_analysis_progress(
+                "revenue",
+                {"status": "Failed", "error": str(e)}
+            )
+            raise
+    
+    def _calculate_growth_rate(self, df):
+        """Calculate revenue growth rate"""
+        if 'Month' in df.columns and 'Amount' in df.columns:
+            monthly = df.groupby('Month')['Amount'].sum()
+            if len(monthly) > 1:
+                return ((monthly.iloc[-1] - monthly.iloc[0]) / monthly.iloc[0] * 100)
+        return 0
+    
+    def _get_top_categories(self, df, n=5):
+        """Get top revenue categories"""
+        if 'Category' in df.columns and 'Amount' in df.columns:
+            return df.groupby('Category')['Amount'].sum().nlargest(n).to_dict()
+        return {}
+    
+    def _generate_recommendations(self, metrics):
+        """Generate recommendations based on metrics"""
+        recommendations = []
+        
+        if metrics.get('revenue_growth', 0) < 0:
+            recommendations.append("Revenue is declining - investigate causes")
+        elif metrics.get('revenue_growth', 0) > 20:
+            recommendations.append("Strong revenue growth - consider scaling operations")
+            
+        return recommendations
+    
+    def generate_comprehensive_report(self):
+        """Generate a comprehensive report with task status"""
+        report = []
+        report.append("# Financial Analysis Report\n")
+        report.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        
+        # Add task status
+        report.append("## Task Status\n")
+        report.append(self.taskmaster.generate_task_report())
+        
+        return "\n".join(report)
+
+
+# Example usage
+if __name__ == "__main__":
+    analyzer = EnhancedFinancialAnalyzer()
+    
+    # Initialize tasks
+    analyzer.taskmaster.setup_financial_analysis_tasks()
+    
+    # Run analysis with task tracking
+    print("Running enhanced financial analysis with task tracking...")
+    
+    # Example: Analyze income statement
+    if os.path.exists("pm_gl_monthly_income_2023_2024.csv"):
+        try:
+            results = analyzer.analyze_income_statement("pm_gl_monthly_income_2023_2024.csv")
+            print(f"Income analysis completed: Total Revenue: ${results['total_revenue']:,.2f}")
+        except Exception as e:
+            print(f"Error in analysis: {e}")
+    
+    # Generate report
+    print("\n" + analyzer.generate_comprehensive_report())

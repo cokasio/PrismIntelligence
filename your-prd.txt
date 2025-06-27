@@ -1,0 +1,37 @@
+# Product Requirements Document (PRD)
+
+## 1. Overview
+Briefly describe the purpose and vision of the product.
+
+## 2. Goals & Objectives
+- List the primary goals and objectives for this product or feature.
+
+## 3. Key Features
+- Feature 1: Description
+- Feature 2: Description
+- Feature 3: Description
+
+## 4. Functional Requirements
+- Requirement 1: Description
+- Requirement 2: Description
+- Requirement 3: Description
+
+## 5. Non-Functional Requirements
+- Performance, security, scalability, etc.
+
+## 6. User Stories / Use Cases
+- As a [user], I want to [do something] so that [benefit].
+
+## 7. Milestones & Timeline
+- Milestone 1: Description & target date
+- Milestone 2: Description & target date
+
+## 8. Success Metrics
+- How will success be measured?
+
+## 9. Stakeholders
+- List of key stakeholders and their roles
+
+---
+
+Fill in each section with your project details. Once complete, I can parse this PRD and generate a detailed task list for you. 

@@ -1,0 +1,7 @@
+activity_id,company_id,contact_id,activity_type,activity_date,researcher_name,data_source,findings,confidence_level,verification_status,follow_up_needed
+1,6,14,LinkedIn Search,2025-06-22 12:00:00,AI Research System,LinkedIn Profile,"Director Asset Management at Z Modular with 25+ years multifamily real estate experience. Located in Scottsdale AZ. Strong background in asset/property management.",High,Verified,FALSE
+2,6,13,Web Research,2025-06-22 12:05:00,AI Research System,LinkedIn + Personal Website,"Manager of Analytics at Z Modular. 18+ years analytics experience. Military Intelligence background. Founder of TactIQco. Personal website: manoahwilliams.com",Medium,Verified,FALSE
+3,6,12,LinkedIn Search,2025-06-22 12:10:00,AI Research System,LinkedIn Profile,"Power BI Analyst at Z Modular. LinkedIn profile shows business intelligence and analytics focus.",Medium,Verified,FALSE
+4,6,11,Web Research,2025-06-22 12:15:00,AI Research System,Professional Databases,"Senior Asset Manager at Zekelman Industries. Asset management role with focus on real estate portfolio.",Medium,Unverified,TRUE
+5,7,15,LinkedIn Search,2025-06-22 12:20:00,AI Research System,LinkedIn Profile,"Director at Yardi Systems Inc. Technology focus within the company. Potential partnership opportunity.",High,Verified,FALSE
+

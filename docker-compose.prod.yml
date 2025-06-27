@@ -1,0 +1,93 @@
+version: '3.8'
+
+# Production Docker Compose configuration for Prism Intelligence
+# This configuration optimizes for performance, security, and reliability
+# Production environments have different requirements than development
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - LOG_LEVEL=info
+      - RATE_LIMIT_ENABLED=true
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      # In production, we only mount configuration and logs
+      # Source code is baked into the container image
+      - ./logs:/app/logs
+      - ./config/production.env:/app/.env:ro
+    networks:
+      - prism-production
+    restart: always
+    # Resource limits prevent any single container from consuming all server resources
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    # Health check ensures load balancers know when the service is ready
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis-production-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - prism-production
+    restart: always
+    # Redis doesn't need to be exposed to the outside world
+    # Only internal services should access it
+    expose:
+      - "6379"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+# Production volumes use named volumes for better management
+volumes:
+  redis-production-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /var/lib/prism-intelligence/redis
+
+# Production network configuration with custom settings
+networks:
+  prism-production:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

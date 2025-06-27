@@ -1,0 +1,12 @@
+company_id,company_name,industry_type,company_size,headquarters_city,headquarters_state,website_url,linkedin_company_url,employee_count,yardi_client_status,business_description,pain_points,budget_range,research_status,research_notes
+1,12 Oaks Senior Living,Senior Living,Small (1-50),,,,,8,Unknown,"Senior living facility providing care services","Resident care coordination, regulatory compliance, family communication","$50K-$100K",Not Started,
+2,"33 Degrees Corporate Services, LLC",Property Management,Small (1-50),,,,,4,Unknown,"Corporate services and property management","Operational efficiency, cost management, technology integration","Under $50K",Not Started,
+3,33Floors,Property Management,Small (1-50),,,,,4,Unknown,"Property management and real estate services","Portfolio optimization, tenant retention, operational efficiency","Under $50K",Not Started,
+4,3D Investments,Real Estate Development,Small (1-50),,,,,2,Unknown,"Real estate investment and development","Asset performance, financial reporting, portfolio analytics","$50K-$100K",Not Started,
+5,"5Rivers CRE, LLC",Real Estate Development,Small (1-50),,,,,1,Unknown,"Commercial real estate development","Development-to-operations transition, project management, cost control","$50K-$100K",Not Started,
+6,Zekelman Industries,Real Estate Development,Enterprise (1000+),,,,,48,Unknown,"Large manufacturing company with real estate/modular construction subsidiary","Asset management complexity, development-to-operations transition, compliance reporting","$500K+",Not Started,
+7,"Yardi Systems, Inc.",Technology/Software,Enterprise (1000+),,,,,453,Current Client,"Property management software company","System optimization, integration challenges, client support","$500K+",Not Started,
+8,Fairfield,Property Management,Small (1-50),,,,,24,Unknown,"Property management services","Operational efficiency, tenant management, portfolio optimization","$100K-$250K",Not Started,
+9,"Greystar Management Services, LLC",Property Management,Medium (51-200),,,,,21,Unknown,"Large property management company","Multi-market operations, operational standardization, technology integration","$250K-$500K",Not Started,
+10,"Welltower OP LLC",REIT,Small (1-50),,,,,18,Unknown,"Healthcare real estate investment trust","Asset performance tracking, financial reporting, portfolio analytics","$250K-$500K",Not Started
+

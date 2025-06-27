@@ -1,0 +1,64 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "ES2022",                      /* Set the JavaScript language version for emitted JavaScript */
+    "lib": ["ES2022"],                       /* Specify library files to include in compilation */
+    "module": "commonjs",                    /* Specify module code generation */
+    
+    /* Modules */
+    "rootDir": "./src",                      /* Specify the root folder within your source files */
+    "moduleResolution": "node",              /* Specify how TypeScript looks up a file from a given module specifier */
+    "baseUrl": "./",                         /* Base directory to resolve non-relative module names */
+    "paths": {                               /* Path mapping for module resolution */
+      "@/*": ["src/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"],
+      "@parsers/*": ["src/parsers/*"],
+      "@database/*": ["src/database/*"]
+    },
+    
+    /* JavaScript Support */
+    "allowJs": true,                         /* Allow JavaScript files to be compiled */
+    "checkJs": false,                        /* Report errors in .js files */
+    
+    /* Emit */
+    "outDir": "./dist",                      /* Redirect output structure to the directory */
+    "removeComments": true,                  /* Remove comments in emitted files */
+    "sourceMap": true,                       /* Create source map files for debuggers */
+    "declaration": true,                     /* Generate .d.ts declaration files */
+    "declarationMap": true,                  /* Create sourcemaps for declaration files */
+    
+    /* Type Checking */
+    "strict": true,                          /* Enable all strict type-checking options */
+    "noImplicitAny": true,                   /* Error on expressions with an implied 'any' type */
+    "strictNullChecks": true,                /* Enable strict null checks */
+    "strictFunctionTypes": true,             /* Ensure function parameter types are checked */
+    "strictBindCallApply": true,             /* Check 'bind', 'call', and 'apply' methods */
+    "strictPropertyInitialization": true,    /* Ensure class properties are initialized */
+    "noImplicitThis": true,                  /* Error on 'this' expressions with an implied 'any' type */
+    "alwaysStrict": true,                    /* Ensure 'use strict' is always emitted */
+    
+    /* Additional Checks */
+    "noUnusedLocals": true,                  /* Report errors on unused local variables */
+    "noUnusedParameters": true,              /* Report errors on unused parameters */
+    "noImplicitReturns": true,               /* Report error when not all paths return a value */
+    "noFallthroughCasesInSwitch": true,     /* Report errors for fallthrough cases in switch */
+    "noUncheckedIndexedAccess": true,       /* Add 'undefined' to index signature results */
+    
+    /* Interop Constraints */
+    "esModuleInterop": true,                 /* Emit additional JavaScript for easier CommonJS interop */
+    "allowSyntheticDefaultImports": true,    /* Allow default imports from modules with no default export */
+    "forceConsistentCasingInFileNames": true, /* Ensure consistent casing in file names */
+    
+    /* Skip Lib Check */
+    "skipLibCheck": true                     /* Skip type checking of declaration files */
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
+}

@@ -1,0 +1,28 @@
+
+# DeepSeek
+DEEPSEEK_API_KEY=""
+# OpenAI
+OPENAI_API_KEY=""
+
+# Anthropic (Claude)
+ANTHROPIC_API_KEY=""
+
+# Gemini (Google AI)
+GEMINI_API_KEY=""
+
+# Mistral AI
+MISTRAL_API_KEY=""
+
+AIDER_MODEL=deepseek-coder-33b-instruct
+AIDER_API_BASE=https://api.deepseek.com/v1
+
+
+#@echo off
+#setx OPENAI_API_KEY "s" /M
+#setx ANTHROPIC_API_KEY "" /M
+#setx DEEPSEEK_API_KEY "" /M
+#setx MISTRAL_API_KEY "" /M
+#setx GEMINI_API_KEY "" /M
+#echo API keys set successfully. You must restart your Command Prompt to apply changes.
+#pause
+

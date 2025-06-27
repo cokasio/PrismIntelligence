@@ -1,0 +1,32 @@
+# Sample Financial Report - March 2025
+Property: Riverside Office Complex
+Report Period: March 1, 2025 - March 31, 2025
+
+## Revenue Summary
+Account,Amount,Budget,Variance
+Base Rent,125000,120000,5000
+Parking Revenue,8500,8000,500
+Other Income,2500,2000,500
+Total Revenue,136000,130000,6000
+
+## Operating Expenses
+Account,Amount,Budget,Variance
+Property Management,5400,5500,-100
+Utilities,12500,11000,1500
+Maintenance & Repairs,8500,9000,-500
+Insurance,3200,3200,0
+Property Taxes,15000,15000,0
+Marketing & Leasing,2500,3000,-500
+Total Operating Expenses,47100,46700,400
+
+## Net Operating Income
+Total Revenue,136000
+Total Operating Expenses,47100
+Net Operating Income,88900
+NOI Margin,65.4%
+
+## Notes
+- Base rent increased due to two new tenant leases
+- Utilities higher than budget due to severe weather
+- Maintenance costs under budget due to preventive maintenance program
+- Strong NOI performance for the month

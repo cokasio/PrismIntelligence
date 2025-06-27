@@ -1,0 +1,151 @@
+# TaskMaster Integration for Financial Analysis Project
+
+This is a lightweight Python implementation inspired by claude-task-master, specifically tailored for your financial analysis project.
+
+## 🚀 Quick Start
+
+```python
+from financial_analysis_taskmaster import FinancialAnalysisTaskmaster
+
+# Initialize taskmaster
+taskmaster = FinancialAnalysisTaskmaster()
+
+# Set up financial analysis tasks
+taskmaster.setup_financial_analysis_tasks()
+
+# Track progress
+taskmaster.track_analysis_progress("revenue", {"status": "Processing"})
+
+# Complete tasks
+taskmaster.complete_analysis_task("revenue", {"total": 100000})
+```
+
+## 📁 Structure
+
+```
+taskmaster/
+├── __init__.py           # Package initialization
+├── task.py              # Task data model
+├── task_manager.py      # Core task management
+└── context_manager.py   # AI context management
+
+Integration files:
+├── financial_analysis_taskmaster.py  # Main integration
+└── financial_analyzer_enhanced.py    # Example enhanced analyzer
+```
+## 🎯 Features
+
+### Task Management
+- Create and track financial analysis tasks
+- Set priorities and dependencies
+- Track financial impact of tasks
+- Organize by analysis type (revenue, cashflow, balance)
+
+### Context Management
+- Track data sources used
+- Record AI interactions
+- Maintain financial metrics
+- Preserve analysis context across sessions
+
+### Integration with Financial Analysis
+- Automatic task creation for analysis workflows
+- Progress tracking during analysis
+- Result storage and retrieval
+- Comprehensive reporting
+
+## 💡 Usage Examples
+
+### 1. Basic Task Creation
+```python
+from taskmaster import TaskManager, TaskPriority
+
+tm = TaskManager()
+task = tm.create_task(
+    title="Analyze Q4 Revenue",
+    description="Deep dive into Q4 revenue streams",
+    priority=TaskPriority.HIGH,
+    financial_impact=50000,
+    analysis_type="revenue"
+)
+```
+### 2. Enhanced Financial Analyzer
+```python
+from financial_analyzer_enhanced import EnhancedFinancialAnalyzer
+
+analyzer = EnhancedFinancialAnalyzer()
+analyzer.taskmaster.setup_financial_analysis_tasks()
+
+# Analyze with automatic task tracking
+results = analyzer.analyze_income_statement("income_data.csv")
+```
+
+### 3. Context Tracking
+```python
+from taskmaster import ContextManager
+
+cm = ContextManager()
+
+# Add data sources
+cm.add_data_source("pm_gl_monthly_income_2023_2024.csv", "Monthly income data")
+
+# Track AI interactions
+cm.add_ai_interaction(
+    task_id="task-123",
+    prompt="Analyze revenue trends",
+    response="Revenue shows 15% YoY growth...",
+    model="claude"
+)
+
+# Update financial metrics
+cm.update_financial_metrics({
+    "total_revenue": 1500000,
+    "profit_margin": 0.23,
+    "growth_rate": 0.15
+})
+```
+
+## 🔧 Configuration
+
+The taskmaster creates a `.taskmaster/` directory in your project root to store:
+- `tasks.json` - All task data
+- `context.json` - Context and AI interaction history
+
+## 🎨 Customization
+
+You can extend the task model for your specific needs:
+
+```python
+# In task.py, we've added financial-specific fields:
+financial_impact: Optional[float] = None
+data_sources: List[str] = field(default_factory=list)
+analysis_type: Optional[str] = None
+```
+
+## 🚦 Integration with Existing Code
+
+The taskmaster is designed to wrap around your existing financial analyzers:
+
+1. **Minimal Changes**: Use the enhanced analyzer as a drop-in replacement
+2. **Progressive Enhancement**: Add task tracking to existing functions
+3. **Full Integration**: Build new features with task management from the start
+
+## 📊 Benefits
+
+- **Track Progress**: Know exactly where you are in complex analyses
+- **Maintain Context**: Never lose track of what data you've analyzed
+- **AI Memory**: Keep a record of all AI interactions for reference
+- **Prioritize Work**: Focus on high-impact financial analyses first
+- **Generate Reports**: Automatic task and progress reporting
+
+## 🛣️ Roadmap
+
+Future enhancements could include:
+- Web dashboard for task visualization
+- Integration with your existing dashboards
+- Automated task creation from data uploads
+- AI-suggested task prioritization
+- Export to project management tools
+
+---
+
+This lightweight implementation gives you the core benefits of task management without the complexity of the full Node.js claude-task-master. It's specifically designed to work with your Python-based financial analysis tools.

@@ -1,0 +1,45 @@
+outreach_id,campaign_id,contact_id,outreach_type,outreach_date,subject_line,message_content,response_received,response_date,response_content,response_sentiment,meeting_scheduled,outcome,follow_up_scheduled,follow_up_date,notes
+1,1,14,Email,2025-06-22 09:00:00,"Optimizing Z Modular's Asset Management Operations","Hi Robert,
+
+I noticed Z Modular is expanding rapidly in the multifamily development space, and I specialize in helping companies like yours optimize their Yardi systems for better asset management efficiency.
+
+Many multifamily developers are facing challenges with:
+- Development-to-operations transition complexity
+- Asset performance tracking across portfolios
+- Scaling operations without proportional staff increases
+
+I've helped similar companies achieve 25-35% improvements in asset performance through strategic Yardi consulting.
+
+Would you be open to a brief 15-minute conversation about your current asset management priorities?
+
+Best regards,
+[Your Name]
+Yardi Consulting Specialist",FALSE,,,No Response,FALSE,No Response,TRUE,2025-06-29,Initial outreach to high-priority target
+2,2,,,LinkedIn Message,2025-06-22 10:00:00,,"Hi Jason,
+
+I help housing authorities streamline HUD compliance and improve operational efficiency through Yardi optimization. 
+
+Phenix City Housing Authority's focus on serving the community resonates with my work helping public housing organizations reduce compliance reporting time by 40% while improving tenant satisfaction.
+
+Would you be open to connecting? I'd love to share some insights from other housing authorities that might be relevant to your work.
+
+Best regards,
+[Your Name]",FALSE,,,No Response,FALSE,No Response,TRUE,2025-06-25,LinkedIn connection request sent
+3,3,,,Email,2025-06-22 11:00:00,"Enhancing Resident Experience at Commonwealth Senior Living","Hi Angela,
+
+Senior living operations require seamless coordination between care, family communication, and regulatory compliance.
+
+I help senior living communities like Commonwealth Senior Living optimize their Yardi systems to:
+- Improve resident care coordination  
+- Enhance family communication
+- Streamline regulatory compliance
+- Reduce administrative burden
+
+Commonwealth Senior Living's commitment to quality care aligns perfectly with the operational improvements I help facilities achieve.
+
+Would you have 15 minutes to discuss how other senior living communities have improved their operations?
+
+Best regards,
+[Your Name]
+Senior Living Technology Specialist",FALSE,,,No Response,FALSE,No Response,TRUE,2025-06-29,Initial outreach to senior living director
+

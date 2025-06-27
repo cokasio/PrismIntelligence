@@ -1,0 +1,55 @@
+campaign_id,campaign_name,campaign_type,target_audience,message_template,start_date,end_date,campaign_status,success_metrics,created_by
+1,Decision Makers Q1 2025,Email,"C-Level executives and Directors at property management companies, housing authorities, and real estate firms","Subject: Optimizing {company_name}'s Property Management Operations
+
+Hi {first_name},
+
+I noticed {company_name} is in the {industry} space, and I specialize in helping companies like yours optimize their Yardi systems for better operational efficiency.
+
+Many {industry} companies are facing challenges with:
+- {pain_point_1}
+- {pain_point_2}
+- {pain_point_3}
+
+I've helped similar companies achieve 25-35% improvements in operational efficiency through strategic Yardi consulting.
+
+Would you be open to a brief 15-minute conversation about your current priorities?
+
+Best regards,
+[Your Name]
+Yardi Consulting Specialist",2025-06-22,2025-07-22,Planning,"Response rate >15%, Meeting booking rate >5%, Qualified leads >2",Yardi Consultant
+2,Housing Authority Compliance Focus,Email,"Directors and managers at housing authorities","Subject: Streamlining HUD Compliance at {company_name}
+
+Hi {first_name},
+
+As someone working in public housing, you understand the complexity of HUD compliance reporting and tenant management.
+
+I specialize in helping housing authorities like {company_name} automate compliance processes and improve operational efficiency through Yardi optimization.
+
+Recent clients have seen:
+- 40% reduction in compliance reporting time
+- Improved tenant satisfaction scores
+- Streamlined maintenance coordination
+
+Would you be interested in learning how other housing authorities have tackled these challenges?
+
+Best regards,
+[Your Name]
+Public Housing Yardi Specialist",2025-06-22,2025-08-22,Planning,"Response rate >20%, Meeting booking rate >8%, Qualified leads >3",Yardi Consultant
+3,Senior Living Operations,Email,"Directors and managers at senior living facilities","Subject: Enhancing Resident Experience at {company_name}
+
+Hi {first_name},
+
+Senior living operations require seamless coordination between care, family communication, and regulatory compliance.
+
+I help senior living communities like {company_name} optimize their Yardi systems to:
+- Improve resident care coordination
+- Enhance family communication
+- Streamline regulatory compliance
+- Reduce administrative burden
+
+Would you have 15 minutes to discuss how other senior living communities have improved their operations?
+
+Best regards,
+[Your Name]
+Senior Living Technology Specialist",2025-06-22,2025-08-22,Planning,"Response rate >18%, Meeting booking rate >6%, Qualified leads >2",Yardi Consultant
+

@@ -1,0 +1,82 @@
+version: '3.8'
+
+# Docker Compose orchestrates multiple services that work together
+# Think of this as a conductor coordinating an entire orchestra of services
+
+services:
+  # Main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # These will be loaded from your .env file
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      # Mount local directory for development hot-reloading
+      - .:/app
+      - /app/node_modules
+    networks:
+      - prism-network
+    restart: unless-stopped
+
+  # Redis for queue management and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      # Persist Redis data between container restarts
+      - redis-data:/data
+    networks:
+      - prism-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # Optional: Local PostgreSQL for testing
+  # In production, you'll use Supabase, but this is helpful for local development
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: prism_intelligence
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+    networks:
+      - prism-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+# Named volumes persist data between container recreations
+volumes:
+  redis-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+# Custom network allows services to communicate using service names
+networks:
+  prism-network:
+    driver: bridge

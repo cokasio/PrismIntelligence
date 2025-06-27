@@ -1,0 +1,168 @@
+"""
+Integration of TaskMaster with Financial Analysis Project
+This script demonstrates how to use TaskMaster with your existing financial analyzers
+"""
+import os
+import sys
+from datetime import datetime
+
+# Add the parent directory to the path to import taskmaster
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+from taskmaster import TaskManager, ContextManager, TaskPriority, TaskStatus
+
+
+class FinancialAnalysisTaskmaster:
+    """Integrates TaskMaster with financial analysis workflows"""
+    
+    def __init__(self):
+        self.task_manager = TaskManager()
+        self.context_manager = ContextManager()
+        
+    def setup_financial_analysis_tasks(self):
+        """Create initial task structure for financial analysis"""
+        
+        # Main analysis task
+        main_task = self.task_manager.create_task(
+            title="Complete Financial Health Analysis",
+            description="Analyze all financial data and generate comprehensive reports",
+            priority=TaskPriority.HIGH,
+            analysis_type="comprehensive",
+            financial_impact=100000.0  # Potential impact
+        )        
+        # Create subtasks for different analysis types
+        subtasks = [
+            ("Income Statement Analysis", "revenue", ["pm_gl_monthly_income_2023_2024.csv"]),
+            ("Cash Flow Analysis", "cashflow", ["pm_gl_monthly_cashflow_2023_2024.csv"]),
+            ("Balance Sheet Analysis", "balance", ["pm_gl_monthly_balance_2023_2024.csv"]),
+            ("Dashboard Generation", "visualization", ["all CSV files"]),
+        ]
+        
+        for title, analysis_type, data_sources in subtasks:
+            self.task_manager.add_subtask(
+                main_task.id,
+                title=title,
+                description=f"Perform {analysis_type} analysis"
+            )
+            
+            # Also create as separate task for tracking
+            task = self.task_manager.create_task(
+                title=title,
+                description=f"Detailed {analysis_type} analysis",
+                priority=TaskPriority.MEDIUM,
+                analysis_type=analysis_type,
+                data_sources=data_sources,
+                tags=["financial", analysis_type]
+            )
+            
+            # Add data sources to context
+            for source in data_sources:
+                self.context_manager.add_data_source(source, f"Data for {analysis_type} analysis")
+        
+        return main_task    
+    def track_analysis_progress(self, analysis_type: str, metrics: dict):
+        """Track progress of financial analysis"""
+        # Find the relevant task
+        tasks = self.task_manager.get_tasks_by_analysis_type(analysis_type)
+        
+        if tasks:
+            task = tasks[0]
+            # Update task with progress
+            self.task_manager.update_task(
+                task.id,
+                status=TaskStatus.IN_PROGRESS,
+                context={"metrics": metrics}
+            )
+            
+            # Update context with financial metrics
+            self.context_manager.update_financial_metrics(metrics)
+            
+            # Set current analysis
+            self.context_manager.set_current_analysis(analysis_type, metrics)
+            
+            return task
+        return None
+    
+    def complete_analysis_task(self, analysis_type: str, results: dict):
+        """Mark an analysis task as completed with results"""
+        tasks = self.task_manager.get_tasks_by_analysis_type(analysis_type)
+        
+        if tasks:
+            task = tasks[0]
+            # Complete the task
+            self.task_manager.complete_task(task.id)            
+            # Store results in context
+            self.task_manager.update_task(
+                task.id,
+                context={"results": results}
+            )
+            
+            return task
+        return None
+    
+    def get_analysis_status(self):
+        """Get current status of all financial analysis tasks"""
+        all_tasks = self.task_manager.list_tasks()
+        financial_tasks = self.task_manager.get_financial_tasks()
+        
+        status = {
+            "total_tasks": len(all_tasks),
+            "financial_tasks": len(financial_tasks),
+            "completed": len([t for t in all_tasks if t.status == TaskStatus.COMPLETED]),
+            "in_progress": len([t for t in all_tasks if t.status == TaskStatus.IN_PROGRESS]),
+            "todo": len([t for t in all_tasks if t.status == TaskStatus.TODO]),
+            "context_summary": self.context_manager.get_context_summary()
+        }
+        
+        return status
+    
+    def generate_task_report(self):
+        """Generate a report of all tasks"""
+        report_lines = [
+            "# Financial Analysis Task Report",
+            f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+            "",
+            "## Task Summary"
+        ]        
+        status = self.get_analysis_status()
+        for key, value in status.items():
+            if key != "context_summary":
+                report_lines.append(f"- {key.replace('_', ' ').title()}: {value}")
+        
+        report_lines.extend([
+            "",
+            "## Active Tasks",
+            ""
+        ])
+        
+        for task in self.task_manager.list_tasks():
+            if task.status != TaskStatus.COMPLETED:
+                report_lines.append(f"### {task.title}")
+                report_lines.append(f"- Status: {task.status.value}")
+                report_lines.append(f"- Priority: {task.priority.name}")
+                if task.analysis_type:
+                    report_lines.append(f"- Analysis Type: {task.analysis_type}")
+                if task.financial_impact:
+                    report_lines.append(f"- Financial Impact: ${task.financial_impact:,.2f}")
+                report_lines.append("")
+        
+        return "\n".join(report_lines)
+
+
+# Example usage
+if __name__ == "__main__":
+    # Initialize the task master
+    taskmaster = FinancialAnalysisTaskmaster()
+    
+    # Set up initial tasks
+    print("Setting up financial analysis tasks...")
+    main_task = taskmaster.setup_financial_analysis_tasks()
+    print(f"Created main task: {main_task.title}")
+    
+    # Show current status
+    print("\nCurrent Analysis Status:")
+    status = taskmaster.get_analysis_status()
+    for key, value in status.items():
+        print(f"  {key}: {value}")
+    
+    print("\n" + taskmaster.generate_task_report())
