@@ -7,11 +7,11 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import crypto from 'crypto';
-import config from '../../config';
-import { apiLogger } from '../../utils/logger';
-import { db } from '../../services/database';
-import { queueService } from '../../services/queue';
-import { emailService, InboundEmail } from '../../services/email';
+import config from '../config';
+import { apiLogger } from '../utils/logger';
+import { db } from '../services/database';
+import { queueService } from '../services/queue';
+import { emailService, InboundEmail } from '../services/email';
 
 const router = Router();
 
@@ -79,55 +79,50 @@ router.get('/health', async (req: Request, res: Response) => {
 });
 
 /**
- * SendGrid Inbound Parse Webhook
+ * CloudMailin Inbound Email Webhook
  * This is where email reports enter the system
  */
-router.post('/webhooks/sendgrid/inbound', 
+router.post('/webhooks/cloudmailin', 
   // Verify webhook signature if configured
-  verifySendGridWebhook,
+  verifyCloudMailinWebhook,
   async (req: Request, res: Response) => {
     try {
-      apiLogger.info('Received inbound email webhook', {
-        from: req.body.from,
-        to: req.body.to,
-        subject: req.body.subject,
+      // CloudMailin sends data in a cleaner format
+      const {
+        to,           // The email address it was sent to
+        from,         // Sender's email
+        subject,      // Email subject
+        plain,        // Plain text body
+        html,         // HTML body (if any)
+        attachments,  // Array of attachments
+        headers,      // Email headers
+      } = req.body;
+
+      apiLogger.info('Received CloudMailin webhook', {
+        to,
+        from, 
+        subject,
+        attachmentCount: attachments?.length || 0
       });
 
-      // Parse the inbound email data
-      const emailData: InboundEmail = {
-        to: req.body.to,
-        from: req.body.from,
-        subject: req.body.subject,
-        text: req.body.text,
-        html: req.body.html,
-        attachments: parseAttachments(req.body),
-        envelope: req.body.envelope ? JSON.parse(req.body.envelope) : undefined,
-        spam_score: parseFloat(req.body.spam_score || '0'),
-        spam_report: req.body.spam_report,
-      };
+      // Extract tenant ID from email address
+      // Format: reports+tenant123@yourdomain.com or tenant123@reports.yourdomain.com
+      const tenantId = extractTenantId(to);
 
-      // Check spam score
-      if (emailData.spam_score && emailData.spam_score > 5) {
-        apiLogger.warn('High spam score detected', {
-          from: emailData.from,
-          spamScore: emailData.spam_score,
-        });
-        // Still process but log for monitoring
-      }
-
-      // Validate the email has attachments
-      if (!emailData.attachments || emailData.attachments.length === 0) {
-        apiLogger.warn('No attachments in email', { from: emailData.from });
+      // Validate that we have attachments
+      if (!attachments || attachments.length === 0) {
+        apiLogger.warn('No attachments in email', { from, to });
         
         // Send friendly error response
         await emailService.sendProcessingError(
-          emailData.from,
+          from,
           'no-report-id',
           'No attachment found',
           'Please attach a property report (PDF, Excel, or CSV) to your email.'
         );
         
-        res.json({ 
+        // CloudMailin expects 200 OK even for business logic errors
+        res.status(200).json({ 
           success: false, 
           message: 'No attachments found' 
         });
@@ -135,122 +130,141 @@ router.post('/webhooks/sendgrid/inbound',
       }
 
       // Find the first valid report file
-      const reportAttachment = emailData.attachments.find(att => 
-        isValidReportFile(att.filename)
+      const reportAttachment = attachments.find(att => 
+        isValidReportFile(att.file_name)
       );
 
       if (!reportAttachment) {
         apiLogger.warn('No valid report files in attachments', {
-          from: emailData.from,
-          attachments: emailData.attachments.map(a => a.filename),
+          from,
+          attachments: attachments.map(a => a.file_name),
         });
         
         await emailService.sendProcessingError(
-          emailData.from,
+          from,
           'no-report-id',
           'Invalid file type',
-          'Please attach a PDF, Excel (.xlsx, .xls), or CSV file containing your property report.'
+          'Please attach a PDF, Excel (.xlsx), or CSV file containing your property report.'
         );
         
-        res.json({ 
+        res.status(200).json({ 
           success: false, 
           message: 'No valid report files found' 
         });
         return;
       }
 
-      // Determine organization from sender email
-      // In production, this would do a proper lookup
-      const organizationId = await getOrganizationFromEmail(emailData.from);
-      
-      if (!organizationId) {
-        apiLogger.warn('Unknown sender email', { from: emailData.from });
-        
-        // For MVP, create a pending organization
-        const pendingOrg = await db.createOrganization({
-          name: 'Pending Organization',
-          email_domain: emailData.from.split('@')[1],
-          settings: { auto_created: true },
+      // Check file size
+      if (reportAttachment.size > config.storage.maxFileSizeBytes) {
+        apiLogger.warn('Attachment too large', {
+          from,
+          filename: reportAttachment.file_name,
+          size: reportAttachment.size,
+          maxSize: config.storage.maxFileSizeBytes,
         });
         
-        organizationId = pendingOrg?.id || 'pending';
+        await emailService.sendProcessingError(
+          from,
+          'no-report-id',
+          'File too large',
+          `Please ensure your file is under ${config.storage.maxFileSizeMB}MB.`
+        );
+        
+        res.status(200).json({ 
+          success: false, 
+          message: 'File too large' 
+        });
+        return;
       }
 
-      // Create a report record in the database
-      const report = await db.createReport({
-        organization_id: organizationId,
-        filename: reportAttachment.filename,
-        file_type: getFileType(reportAttachment.filename),
-        file_size_bytes: Buffer.from(reportAttachment.content, 'base64').length,
-        file_url: 'pending-upload', // Will be updated after upload
-        status: 'pending',
-        sender_email: emailData.from,
-        email_subject: emailData.subject,
-      });
+      // CloudMailin provides content as base64
+      const fileBuffer = Buffer.from(reportAttachment.content, 'base64');
+      
+      // Create report record
+      const reportId = generateReportId();
+      
+      try {
+        // Store report metadata in database
+        await db.createReport({
+          id: reportId,
+          tenantId,
+          filename: reportAttachment.file_name,
+          senderEmail: from,
+          subject,
+          fileSize: reportAttachment.size,
+          fileType: getFileType(reportAttachment.file_name),
+          status: 'pending',
+          receivedAt: new Date(),
+        });
 
-      if (!report) {
-        throw new Error('Failed to create report record');
+        // Store file in Supabase storage
+        const storagePath = `${tenantId}/${reportId}/${reportAttachment.file_name}`;
+        await db.uploadFile(config.storage.bucketRaw, storagePath, fileBuffer);
+
+        // Queue for processing
+        await queueService.addReportForProcessing({
+          reportId,
+          tenantId,
+          filename: reportAttachment.file_name,
+          storagePath,
+          senderEmail: from,
+          fileType: getFileType(reportAttachment.file_name),
+        });
+
+        // Send confirmation email
+        await emailService.sendConfirmation(from, reportId, reportAttachment.file_name);
+
+        apiLogger.info('Report queued for processing', {
+          reportId,
+          tenantId,
+          filename: reportAttachment.file_name,
+        });
+
+        // Success response to CloudMailin
+        res.status(200).json({ 
+          success: true,
+          message: 'Report received and queued for processing',
+          reportId 
+        });
+
+      } catch (error) {
+        apiLogger.error('Failed to process report', {
+          error,
+          reportId,
+          from,
+        });
+        
+        // Try to send error notification
+        await emailService.sendProcessingError(
+          from,
+          reportId,
+          'Processing error',
+          'We encountered an error processing your report. Please try again.'
+        );
+        
+        res.status(500).json({
+          success: false,
+          error: 'Failed to process report',
+        });
       }
-
-      // Send immediate confirmation
-      await emailService.sendReportReceivedConfirmation(
-        emailData.from,
-        report.id,
-        reportAttachment.filename
-      );
-
-      // Queue the report for processing
-      const job = await queueService.addReportForProcessing({
-        reportId: report.id,
-        organizationId: organizationId,
-        filename: reportAttachment.filename,
-        fileType: getFileType(reportAttachment.filename) as 'pdf' | 'excel' | 'csv',
-        fileUrl: 'pending-upload',
-        fileBuffer: Buffer.from(reportAttachment.content, 'base64'),
-        senderEmail: emailData.from,
-        priority: determinePriority(emailData),
-      });
-
-      apiLogger.info('Report queued for processing', {
-        reportId: report.id,
-        jobId: job.id,
-        filename: reportAttachment.filename,
-      });
-
-      res.json({
-        success: true,
-        reportId: report.id,
-        message: 'Report received and queued for processing',
-      });
 
     } catch (error) {
-      apiLogger.error('Failed to process inbound email', { error });
+      apiLogger.error('Failed to process CloudMailin webhook', { error });
       
-      // Try to send error notification
-      if (req.body.from) {
-        await emailService.sendProcessingError(
-          req.body.from,
-          'error',
-          'Processing error',
-          'An unexpected error occurred while processing your report. Please try again or contact support.'
-        ).catch(err => {
-          apiLogger.error('Failed to send error notification', { err });
-        });
-      }
-      
-      res.status(500).json({
-        success: false,
-        error: 'Failed to process email',
+      // CloudMailin will retry on 5xx errors
+      res.status(500).json({ 
+        error: 'Internal server error',
+        message: 'Failed to process email' 
       });
     }
-  }
-);
+});
 
 /**
  * Direct file upload endpoint
- * Alternative to email for direct API integration
+ * Alternative to email - users can upload reports directly
  */
 router.post('/reports/upload',
+  authenticateRequest,
   upload.single('report'),
   async (req: Request, res: Response) => {
     try {
@@ -262,142 +276,145 @@ router.post('/reports/upload',
         return;
       }
 
-      apiLogger.info('Direct file upload received', {
+      const tenantId = req.user?.tenantId || 'default';
+      const reportId = generateReportId();
+      
+      apiLogger.info('Direct file upload', {
         filename: req.file.originalname,
         size: req.file.size,
-        mimetype: req.file.mimetype,
+        tenantId,
       });
 
-      // Get organization from API key or session
-      // For MVP, use a default
-      const organizationId = req.body.organizationId || 'default-org';
-      const userEmail = req.body.email || 'api@prism-intelligence.com';
-
-      // Create report record
-      const report = await db.createReport({
-        organization_id: organizationId,
+      // Store report metadata
+      await db.createReport({
+        id: reportId,
+        tenantId,
         filename: req.file.originalname,
-        file_type: getFileType(req.file.originalname),
-        file_size_bytes: req.file.size,
-        file_url: 'memory-buffer',
+        senderEmail: req.user?.email || 'direct-upload',
+        subject: `Direct upload: ${req.file.originalname}`,
+        fileSize: req.file.size,
+        fileType: getFileType(req.file.originalname),
         status: 'pending',
-        sender_email: userEmail,
-        email_subject: `API Upload: ${req.file.originalname}`,
+        receivedAt: new Date(),
       });
 
-      if (!report) {
-        throw new Error('Failed to create report record');
-      }
+      // Store file
+      const storagePath = `${tenantId}/${reportId}/${req.file.originalname}`;
+      await db.uploadFile(config.storage.bucketRaw, storagePath, req.file.buffer);
 
       // Queue for processing
-      const job = await queueService.addReportForProcessing({
-        reportId: report.id,
-        organizationId: organizationId,
+      await queueService.addReportForProcessing({
+        reportId,
+        tenantId,
         filename: req.file.originalname,
-        fileType: getFileType(req.file.originalname) as 'pdf' | 'excel' | 'csv',
-        fileUrl: 'memory-buffer',
-        fileBuffer: req.file.buffer,
-        senderEmail: userEmail,
-        priority: parseInt(req.body.priority) || 0,
+        storagePath,
+        senderEmail: req.user?.email || 'direct-upload',
+        fileType: getFileType(req.file.originalname),
       });
 
       res.json({
         success: true,
-        reportId: report.id,
-        jobId: job.id,
-        message: 'Report uploaded and queued for processing',
+        message: 'Report uploaded successfully',
+        reportId,
+        status: 'processing',
       });
 
     } catch (error) {
-      apiLogger.error('File upload failed', { error });
+      apiLogger.error('Failed to process uploaded file', { error });
       res.status(500).json({
         success: false,
-        error: error.message,
+        error: 'Failed to process uploaded file',
       });
     }
-  }
-);
-
-/**
- * Get report status endpoint
- * Check the processing status of a report
- */
-router.get('/reports/:reportId/status', async (req: Request, res: Response) => {
-  try {
-    const { reportId } = req.params;
-    
-    // Get report from database
-    const { data: report, error } = await db.getClient('public')
-      .from('reports')
-      .select('*')
-      .eq('id', reportId)
-      .single();
-
-    if (error || !report) {
-      res.status(404).json({
-        success: false,
-        error: 'Report not found',
-      });
-      return;
-    }
-
-    // Get processing logs
-    const { data: logs } = await db.getClient('public')
-      .from('processing_logs')
-      .select('stage, status, message, created_at')
-      .eq('report_id', reportId)
-      .order('created_at', { ascending: false })
-      .limit(10);
-
-    // Get insights count if completed
-    let insightCount = 0;
-    let actionCount = 0;
-    
-    if (report.status === 'completed') {
-      const { count: insights } = await db.getClient('public')
-        .from('insights')
-        .select('*', { count: 'exact', head: true })
-        .eq('report_id', reportId);
-      
-      const { count: actions } = await db.getClient('public')
-        .from('actions')
-        .select('*', { count: 'exact', head: true })
-        .eq('report_id', reportId);
-      
-      insightCount = insights || 0;
-      actionCount = actions || 0;
-    }
-
-    res.json({
-      success: true,
-      report: {
-        id: report.id,
-        filename: report.filename,
-        status: report.status,
-        createdAt: report.created_at,
-        completedAt: report.processing_completed_at,
-        processingTime: report.processing_duration_ms,
-        error: report.error_message,
-      },
-      results: report.status === 'completed' ? {
-        insights: insightCount,
-        actions: actionCount,
-      } : null,
-      logs: logs || [],
-    });
-
-  } catch (error) {
-    apiLogger.error('Failed to get report status', { error });
-    res.status(500).json({
-      success: false,
-      error: 'Failed to retrieve report status',
-    });
-  }
 });
 
 /**
- * Get queue statistics endpoint
- * Monitor the health of the processing queue
+ * Get report status
+ */
+router.get('/reports/:reportId/status',
+  authenticateRequest,
+  async (req: Request, res: Response) => {
+    try {
+      const { reportId } = req.params;
+      const report = await db.getReport(reportId);
+      
+      if (!report) {
+        res.status(404).json({
+          success: false,
+          error: 'Report not found',
+        });
+        return;
+      }
+
+      // Check tenant access
+      if (report.tenantId !== req.user?.tenantId && req.user?.tenantId !== 'admin') {
+        res.status(403).json({
+          success: false,
+          error: 'Access denied',
+        });
+        return;
+      }
+
+      res.json({
+        success: true,
+        report: {
+          id: report.id,
+          filename: report.filename,
+          status: report.status,
+          receivedAt: report.receivedAt,
+          processedAt: report.processedAt,
+          insights: report.insights,
+          actions: report.actions,
+          error: report.error,
+        },
+      });
+
+    } catch (error) {
+      apiLogger.error('Failed to get report status', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve report status',
+      });
+    }
+});
+
+/**
+ * Get all reports for a tenant
+ */
+router.get('/reports',
+  authenticateRequest,
+  async (req: Request, res: Response) => {
+    try {
+      const tenantId = req.user?.tenantId || 'default';
+      const { limit = 50, offset = 0, status } = req.query;
+      
+      const reports = await db.getReports(tenantId, {
+        limit: Number(limit),
+        offset: Number(offset),
+        status: status as string,
+      });
+
+      res.json({
+        success: true,
+        reports,
+        pagination: {
+          limit: Number(limit),
+          offset: Number(offset),
+          total: reports.length, // TODO: Get total count from DB
+        },
+      });
+
+    } catch (error) {
+      apiLogger.error('Failed to get reports', { error });
+      res.status(500).json({
+        success: false,
+        error: 'Failed to retrieve reports',
+      });
+    }
+});
+
+/**
+ * Admin endpoint: Get queue statistics
  */
 router.get('/admin/queue/stats', async (req: Request, res: Response) => {
   try {
@@ -419,35 +436,29 @@ router.get('/admin/queue/stats', async (req: Request, res: Response) => {
 });
 
 /**
- * Webhook signature verification middleware
- * Ensures webhooks are actually from SendGrid
+ * Webhook signature verification middleware for CloudMailin
  */
-function verifySendGridWebhook(req: Request, res: Response, next: NextFunction) {
-  if (!config.email.webhookSecret) {
+function verifyCloudMailinWebhook(req: Request, res: Response, next: NextFunction) {
+  if (!config.email.cloudmailin.secret) {
     // No secret configured, skip verification
     next();
     return;
   }
 
-  const signature = req.get('X-Twilio-Email-Event-Webhook-Signature');
-  const timestamp = req.get('X-Twilio-Email-Event-Webhook-Timestamp');
+  // CloudMailin sends signature in Authorization header
+  const authHeader = req.get('Authorization');
   
-  if (!signature || !timestamp) {
-    apiLogger.warn('Missing webhook signature headers');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    apiLogger.warn('Missing CloudMailin authorization header');
     res.status(401).json({ error: 'Unauthorized' });
     return;
   }
 
-  // Verify signature
-  const payload = timestamp + req.rawBody;
-  const expectedSignature = crypto
-    .createHmac('sha256', config.email.webhookSecret)
-    .update(payload)
-    .digest('base64');
-
-  if (signature !== expectedSignature) {
-    apiLogger.warn('Invalid webhook signature');
-    res.status(401).json({ error: 'Invalid signature' });
+  const providedToken = authHeader.substring(7); // Remove 'Bearer ' prefix
+  
+  if (providedToken !== config.email.cloudmailin.secret) {
+    apiLogger.warn('Invalid CloudMailin webhook secret');
+    res.status(401).json({ error: 'Invalid authorization' });
     return;
   }
 
@@ -455,33 +466,33 @@ function verifySendGridWebhook(req: Request, res: Response, next: NextFunction) 
 }
 
 /**
- * Helper: Parse attachments from SendGrid webhook data
+ * Extract tenant ID from email address
+ * Supports multiple formats:
+ * - tenant123@reports.yourdomain.com
+ * - reports+tenant123@yourdomain.com  
+ * - reports-tenant123@yourdomain.com
  */
-function parseAttachments(body: any): InboundEmail['attachments'] {
-  const attachments: InboundEmail['attachments'] = [];
-  
-  // SendGrid sends attachments as numbered fields
-  let i = 1;
-  while (body[`attachment${i}`]) {
-    try {
-      const attachmentInfo = JSON.parse(body[`attachment-info${i}`] || '{}');
-      attachments.push({
-        filename: attachmentInfo.filename || `attachment${i}`,
-        type: attachmentInfo.type || 'application/octet-stream',
-        content: body[`attachment${i}`],
-        disposition: attachmentInfo.disposition || 'attachment',
-        contentId: attachmentInfo['content-id'],
-      });
-    } catch (err) {
-      apiLogger.warn('Failed to parse attachment', { 
-        index: i, 
-        error: err 
-      });
-    }
-    i++;
+function extractTenantId(emailAddress: string): string {
+  // Pattern 1: subdomain approach (tenant123@reports.yourdomain.com)
+  const subdomainMatch = emailAddress.match(/^([^@]+)@reports\./);
+  if (subdomainMatch) {
+    return subdomainMatch[1];
   }
-  
-  return attachments.length > 0 ? attachments : undefined;
+
+  // Pattern 2: plus addressing (reports+tenant123@yourdomain.com)
+  const plusMatch = emailAddress.match(/\+([^@]+)@/);
+  if (plusMatch) {
+    return plusMatch[1];
+  }
+
+  // Pattern 3: dash separator (reports-tenant123@yourdomain.com)
+  const dashMatch = emailAddress.match(/reports-([^@]+)@/);
+  if (dashMatch) {
+    return dashMatch[1];
+  }
+
+  // Default tenant for single-tenant deployments
+  return 'default';
 }
 
 /**
@@ -505,34 +516,10 @@ function getFileType(filename: string): string {
 }
 
 /**
- * Helper: Get organization ID from email address
- * In production, this would do a real lookup
+ * Helper: Generate unique report ID
  */
-async function getOrganizationFromEmail(email: string): Promise<string | null> {
-  const domain = email.split('@')[1];
-  
-  const { data } = await db.getClient('public')
-    .from('organizations')
-    .select('id')
-    .eq('email_domain', domain)
-    .single();
-  
-  return data?.id || null;
-}
-
-/**
- * Helper: Determine processing priority based on email
- */
-function determinePriority(email: InboundEmail): number {
-  // Higher priority for certain keywords in subject
-  if (email.subject) {
-    const subject = email.subject.toLowerCase();
-    if (subject.includes('urgent') || subject.includes('asap')) return 10;
-    if (subject.includes('important') || subject.includes('priority')) return 5;
-  }
-  
-  // Could also prioritize based on sender, organization tier, etc.
-  return 0;
+function generateReportId(): string {
+  return `report-${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
 }
 
 /**
@@ -540,31 +527,51 @@ function determinePriority(email: InboundEmail): number {
  */
 async function checkDatabaseHealth(): Promise<boolean> {
   try {
-    const { error } = await db.getClient('public')
-      .from('organizations')
-      .select('count')
-      .limit(1);
-    
-    return !error;
-  } catch {
+    // Simple query to verify connection
+    await db.query('SELECT 1');
+    return true;
+  } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Simple authentication middleware (implement based on your needs)
+ */
+function authenticateRequest(req: Request, res: Response, next: NextFunction) {
+  // TODO: Implement actual authentication
+  // For now, just set a default user
+  req.user = {
+    id: 'user-123',
+    tenantId: 'default',
+    email: 'user@example.com',
+  };
+  next();
+}
+
+// Extend Express Request type to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: {
+        id: string;
+        tenantId: string;
+        email: string;
+      };
+      rawBody?: string;
+    }
   }
 }
 
 export default router;
 
 /**
- * Example webhook payload from SendGrid:
- * {
- *   "to": "reports@prism-intelligence.com",
- *   "from": "manager@property.com",
- *   "subject": "March 2024 Financial Report",
- *   "text": "Please find attached the monthly report.",
- *   "html": "<p>Please find attached the monthly report.</p>",
- *   "attachment1": "base64-encoded-file-content",
- *   "attachment-info1": "{\"filename\":\"march-report.pdf\",\"type\":\"application/pdf\"}",
- *   "envelope": "{\"to\":[\"reports@prism-intelligence.com\"],\"from\":\"manager@property.com\"}",
- *   "spam_score": "0.123",
- *   "spam_report": "..."
- * }
+ * API Endpoints Summary:
+ * 
+ * POST   /webhooks/cloudmailin     - CloudMailin webhook for email reports
+ * POST   /reports/upload           - Direct file upload
+ * GET    /reports/:id/status       - Get report processing status
+ * GET    /reports                  - List reports for tenant
+ * GET    /admin/queue/stats        - Queue statistics (admin)
+ * GET    /health                   - Health check
  */

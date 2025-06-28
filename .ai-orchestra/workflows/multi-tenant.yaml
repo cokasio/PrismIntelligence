@@ -1,0 +1,87 @@
+# Workflow: Multi-Tenant Feature
+# For adding tenant-specific functionality
+
+name: Multi-Tenant Feature Implementation
+description: Add a new feature with proper multi-tenant isolation
+
+inputs:
+  - feature_name: "Name of the feature"
+  - description: "What the feature does"
+
+steps:
+  - id: design_architecture
+    tool: claude
+    prompt: |
+      Design multi-tenant architecture for: {feature_name}
+      Description: {description}
+      
+      Consider:
+      - Tenant isolation at database level (Supabase RLS)
+      - CloudMailin email routing (tenant@reports.domain.com)
+      - API authentication and authorization
+      - Queue processing with tenant context
+      - Data privacy and security
+    output: architecture
+
+  - id: update_schema
+    tool: aider
+    depends_on: design_architecture
+    files: src/database/schema.sql
+    prompt: |
+      Update database schema for {feature_name} with:
+      - tenant_id columns where needed
+      - Row Level Security policies
+      - Indexes for tenant queries
+      Based on: {architecture}
+    output: schema_updated
+
+  - id: create_service
+    tool: aider
+    depends_on: design_architecture
+    files: src/services/
+    prompt: |
+      Create a new service for {feature_name} that:
+      - Always includes tenant context
+      - Uses tenant-scoped queries
+      - Implements the architecture: {architecture}
+    output: service_created
+
+  - id: update_routes
+    tool: aider
+    depends_on: service_created
+    files: src/api/routes.ts
+    prompt: |
+      Add API routes for {feature_name} that:
+      - Extract tenant from request context
+      - Validate tenant access
+      - Call the new service with tenant context
+    output: routes_updated
+
+  - id: add_tests
+    tool: aider
+    depends_on: [service_created, routes_updated]
+    files: tests/
+    prompt: |
+      Create tests for {feature_name} that specifically test:
+      - Tenant isolation (no data leakage)
+      - Access control between tenants
+      - Multi-tenant scenarios
+      - Edge cases with tenant switching
+    output: tests_created
+
+  - id: update_docs
+    tool: gemini
+    depends_on: routes_updated
+    prompt: |
+      Generate API documentation for {feature_name} including:
+      - Endpoint descriptions
+      - Required headers for tenant identification
+      - Example requests and responses
+      - Error codes and handling
+    output: docs_created
+
+validation:
+  - "Tenant A cannot access Tenant B's data"
+  - "All queries include tenant_id"
+  - "API routes validate tenant access"
+  - "Tests verify isolation"

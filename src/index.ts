@@ -12,7 +12,6 @@ import config from './config';
 import logger from './utils/logger';
 import routes from './api/routes';
 import { queueService } from './services/queue';
-import { db } from './services/database';
 
 // Create Express application
 const app: Express = express();
@@ -46,9 +45,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));  // For JSON payloads
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));  // For form data
 
-// Store raw body for webhook signature verification
-app.use((req: Request, res: Response, next: NextFunction) => {
-  if (req.path === '/api/webhooks/sendgrid/inbound') {
+// Body parsing middleware
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (req.path === '/api/webhooks/cloudmailin') {
     let rawBody = '';
     req.on('data', (chunk) => {
       rawBody += chunk.toString();
@@ -109,7 +108,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
  */
 
 // Health check at root
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     message: 'Prism Intelligence API',
     version: '1.0.0',
@@ -143,7 +142,7 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler - catches all errors
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   logger.error('Unhandled error', {
     error: err.message,
     stack: err.stack,

@@ -1,5 +1,5 @@
-import { CSVParser } from '../../services/parsers/csv';
-import { logger } from '../../utils/logger';
+import { CSVParser } from '../../parsers/csv';
+import logger from '../../utils/logger';
 
 // Mock the logger to avoid console output during tests
 jest.mock('../../utils/logger');

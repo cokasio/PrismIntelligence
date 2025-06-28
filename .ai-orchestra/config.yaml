@@ -1,0 +1,92 @@
+# AI Orchestra Configuration for PrismIntelligence
+# Customize how AI tools work together on your project
+
+project:
+  name: PrismIntelligence
+  description: AI-powered property management intelligence platform
+  type: typescript-node
+  
+# Tool preferences for different tasks
+preferences:
+  architecture: claude      # Best for system design
+  implementation: aider    # Best for code changes
+  testing: aider          # Best for test generation
+  quick_fixes: gemini     # Best for rapid iterations
+  analysis: claude        # Best for deep understanding
+  refactoring: aider      # Best for code transformation
+
+# Project-specific context
+context:
+  tech_stack:
+    - TypeScript
+    - Node.js/Express
+    - Supabase
+    - CloudMailin
+    - Bull/Redis
+    - Jest
+    
+  key_services:
+    - src/services/claudeAnalyzer.ts    # AI analysis
+    - src/services/email.ts             # Email handling
+    - src/services/database.ts          # Database operations
+    - src/services/queue.ts             # Job processing
+    - src/services/fileProcessor.ts     # Document parsing
+    
+  important_patterns:
+    - Multi-tenant via email routing (tenant@reports.domain.com)
+    - 4-pass AI analysis (extract, verify, insights, actions)
+    - Queue-based asynchronous processing
+    - CloudMailin webhook for email ingestion
+    
+# Custom prompts that understand your project
+prompts:
+  feature_prompt: |
+    Create a new feature for PrismIntelligence that:
+    - Follows TypeScript best practices
+    - Integrates with existing services (Supabase, CloudMailin, Bull)
+    - Includes proper error handling and logging
+    - Supports multi-tenancy
+    - Has comprehensive tests
+    
+  fix_prompt: |
+    Fix this issue in PrismIntelligence:
+    - Check related services and dependencies
+    - Ensure multi-tenant isolation
+    - Add tests to prevent regression
+    - Update documentation
+
+  test_prompt: |
+    Generate tests that:
+    - Mock external services (Supabase, CloudMailin, AI APIs)
+    - Cover edge cases for property management
+    - Test multi-tenant scenarios
+    - Include performance benchmarks where relevant
+
+# Workflow customizations
+workflows:
+  property_report:
+    description: "Add new property report type"
+    steps:
+      - design: "Design parser for new report format"
+      - parser: "Implement parser in src/parsers/"
+      - ai_prompts: "Create AI analysis prompts"
+      - tests: "Add test fixtures with sample reports"
+      
+  tenant_feature:
+    description: "Add tenant-specific functionality"
+    steps:
+      - design: "Design with tenant isolation in mind"
+      - database: "Update schema with tenant_id"
+      - api: "Add tenant checks to routes"
+      - tests: "Test cross-tenant isolation"
+
+# Quick aliases for common tasks
+aliases:
+  svc: "add-service"          # Create new service
+  route: "add-route"          # Add API endpoint
+  tenant: "add-tenant"        # Multi-tenant feature
+  parse: "feature parser"     # New parser
+  ai: "improve-ai"           # AI enhancement
+  test: "test"               # Generate tests
+  fix: "fix"                 # Bug fix
+  opt: "optimize"            # Performance

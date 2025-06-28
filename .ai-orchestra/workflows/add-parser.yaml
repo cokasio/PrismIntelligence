@@ -1,0 +1,82 @@
+# Workflow: Add New Report Parser
+# For adding support for new property report formats
+
+name: New Report Parser
+description: Add support for parsing a new type of property report
+
+inputs:
+  - report_type: "Type of report (e.g., 'cash flow', 'occupancy', 'maintenance')"
+  - format: "File format (pdf, excel, csv)"
+
+steps:
+  - id: analyze_format
+    tool: claude
+    prompt: |
+      Analyze the structure needed for parsing {report_type} reports in {format} format.
+      Consider:
+      - Common fields in {report_type} reports
+      - Data extraction challenges
+      - Integration with existing parsers in src/parsers/
+      - TypeScript interfaces needed
+    output: analysis
+
+  - id: create_parser
+    tool: aider
+    depends_on: analyze_format
+    files: src/parsers/
+    prompt: |
+      Create a new parser for {report_type} reports based on:
+      {analysis}
+      
+      Follow the pattern of existing parsers (pdf.ts, excel.ts, csv.ts)
+      Include proper error handling and logging
+    output: parser_created
+
+  - id: create_types
+    tool: gemini
+    parallel: true
+    prompt: |
+      Generate TypeScript interfaces for {report_type} report data:
+      - Input format structure
+      - Parsed output structure
+      - Include all fields identified in: {analysis}
+    output: types
+
+  - id: add_ai_prompts
+    tool: aider
+    depends_on: parser_created
+    files: src/prompts/
+    prompt: |
+      Create AI analysis prompts for {report_type} reports that:
+      - Extract key metrics
+      - Identify trends and anomalies
+      - Generate property management insights
+      - Create actionable recommendations
+    output: prompts_created
+
+  - id: create_tests
+    tool: aider
+    depends_on: [parser_created, types]
+    files: tests/parsers/ tests/fixtures/
+    prompt: |
+      Create comprehensive tests for the {report_type} parser:
+      - Unit tests for parsing functions
+      - Integration tests with sample files
+      - Edge cases (corrupted files, missing data)
+      - Create sample {report_type} fixtures
+    output: tests_created
+
+  - id: update_processor
+    tool: aider
+    depends_on: parser_created
+    files: src/services/fileProcessor.ts
+    prompt: |
+      Update the file processor to recognize and route {report_type} reports
+      to the new parser. Add the new report type to the processor logic.
+    output: processor_updated
+
+validation:
+  - "Parser can successfully parse sample {report_type} files"
+  - "AI can analyze the parsed data and generate insights"
+  - "Tests pass with >90% coverage"
+  - "Multi-tenant support maintained"

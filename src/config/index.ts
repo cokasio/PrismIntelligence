@@ -6,6 +6,7 @@
 
 import dotenv from 'dotenv';
 import Joi from 'joi';
+import path from 'path';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -45,16 +46,28 @@ const envSchema = Joi.object({
     .default(4096)
     .description('Maximum tokens for AI responses'),
 
-  // Email Configuration
-  SENDGRID_API_KEY: Joi.string().required()
-    .description('SendGrid API key for email services'),
-  SENDGRID_FROM_EMAIL: Joi.string().email().required()
+  // Email Configuration - CloudMailin for receiving, SMTP for sending
+  CLOUDMAILIN_ADDRESS: Joi.string()
+    .description('CloudMailin email address for receiving reports'),
+  CLOUDMAILIN_SECRET: Joi.string()
+    .description('Secret for verifying CloudMailin webhooks'),
+  
+  // SMTP Configuration for sending emails
+  SMTP_HOST: Joi.string().required()
+    .description('SMTP server hostname'),
+  SMTP_PORT: Joi.number().port().default(587)
+    .description('SMTP server port'),
+  SMTP_SECURE: Joi.boolean().default(false)
+    .description('Use TLS/SSL for SMTP'),
+  SMTP_USER: Joi.string().required()
+    .description('SMTP username'),
+  SMTP_PASS: Joi.string().required()
+    .description('SMTP password'),
+  FROM_EMAIL: Joi.string().email().required()
     .description('Email address to send from'),
-  SENDGRID_FROM_NAME: Joi.string()
-    .default('Prism Intelligence')
+  FROM_NAME: Joi.string()
+    .default('Property Intelligence')
     .description('Name to show in email from field'),
-  SENDGRID_WEBHOOK_SECRET: Joi.string()
-    .description('Secret for verifying SendGrid webhooks'),
 
   // Redis Configuration (for job queues)
   REDIS_HOST: Joi.string().default('localhost'),
@@ -155,10 +168,21 @@ export const config = {
 
   // Email
   email: {
-    sendgridApiKey: validatedEnv.SENDGRID_API_KEY as string,
-    fromEmail: validatedEnv.SENDGRID_FROM_EMAIL as string,
-    fromName: validatedEnv.SENDGRID_FROM_NAME as string,
-    webhookSecret: validatedEnv.SENDGRID_WEBHOOK_SECRET as string,
+    // CloudMailin for receiving
+    cloudmailin: {
+      address: validatedEnv.CLOUDMAILIN_ADDRESS as string,
+      secret: validatedEnv.CLOUDMAILIN_SECRET as string,
+    },
+    // SMTP for sending
+    smtp: {
+      host: validatedEnv.SMTP_HOST as string,
+      port: validatedEnv.SMTP_PORT as number,
+      secure: validatedEnv.SMTP_SECURE as boolean,
+      user: validatedEnv.SMTP_USER as string,
+      pass: validatedEnv.SMTP_PASS as string,
+    },
+    fromEmail: validatedEnv.FROM_EMAIL as string,
+    fromName: validatedEnv.FROM_NAME as string,
   },  // Redis
   redis: {
     host: validatedEnv.REDIS_HOST as string,

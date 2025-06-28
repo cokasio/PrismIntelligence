@@ -268,7 +268,7 @@ CREATE TABLE email_communications (
     sent_at TIMESTAMP WITH TIME ZONE,
     opened_at TIMESTAMP WITH TIME ZONE,
     clicked_at TIMESTAMP WITH TIME ZONE,
-    sendgrid_message_id VARCHAR(255),
+    smtp_message_id VARCHAR(255),
     
     -- Status
     status VARCHAR(50) DEFAULT 'pending', -- pending, sent, delivered, failed
