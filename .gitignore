@@ -99,3 +99,9 @@ ENV/
 # Keep these files
 !.env.example
 !.gitkeep
+
+# Files with API keys - NEVER commit these
+utilities/.envwithAPIKeys.txt
+**/start-dev*.bat
+**/start-dev*.ps1
+**/*APIKeys*
