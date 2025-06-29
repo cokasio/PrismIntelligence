@@ -1,0 +1,33 @@
+{
+  "envelope": {
+    "to": "38fab3b51608018af887@cloudmailin.net",
+    "from": "accountant@propertymanager.com",
+    "helo_domain": "mail.propertymanager.com",
+    "remote_ip": "192.168.1.1",
+    "spf": {
+      "result": "pass",
+      "domain": "propertymanager.com"
+    }
+  },
+  "headers": {
+    "subject": "December 2024 Financial Report - Test Property",
+    "from": "Sarah Johnson <accountant@propertymanager.com>",
+    "to": "38fab3b51608018af887@cloudmailin.net",
+    "date": "2024-12-15T10:30:00Z",
+    "message_id": "<test-message-123@propertymanager.com>",
+    "content_type": "multipart/mixed"
+  },
+  "plain": "Hi,\n\nPlease find attached the December 2024 financial report for your property.\n\nKey highlights:\n- Total revenue: $125,000\n- Operating expenses: $45,000\n- NOI: $80,000\n\nBest regards,\nSarah Johnson\nProperty Manager",
+  "html": "<p>Hi,</p><p>Please find attached the December 2024 financial report for your property.</p><p>Key highlights:<br>- Total revenue: $125,000<br>- Operating expenses: $45,000<br>- NOI: $80,000</p><p>Best regards,<br>Sarah Johnson<br>Property Manager</p>",
+  "attachments": [
+    {
+      "filename": "December_2024_Financial_Report.xlsx",
+      "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      "size": 45678,
+      "disposition": "attachment",
+      "content": "UEsDBBQABgAIAAAAIQA..."
+    }
+  ],
+  "spam_score": 0.1,
+  "spam_status": "Not spam"
+}

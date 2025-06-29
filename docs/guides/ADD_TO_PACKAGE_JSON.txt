@@ -1,0 +1,15 @@
+// Add these scripts to your package.json "scripts" section:
+
+"test:server": "ts-node test/test-server.ts",
+"test:email-flow": "ts-node test/test-email-flow.ts",
+"test:multi-tenant": "npm run test:server & sleep 3 && npm run test:email-flow",
+
+// Also make sure you have these dependencies installed:
+// npm install --save-dev @types/express
+
+// Run tests with:
+// npm run test:server (in one terminal)
+// npm run test:email-flow (in another terminal)
+
+// Or on Windows:
+// Use the test-email-flow.bat file

@@ -1,0 +1,1 @@
+{  "name": "@prism/attachment-loop",  "version": "1.0.0",  "main": "main.ts",  "scripts": {    "start": "ts-node main.ts",    "dev": "ts-node --watch main.ts"  }} 

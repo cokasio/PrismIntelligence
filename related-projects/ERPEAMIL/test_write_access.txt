@@ -1,3 +1,0 @@
-Test file created by Desktop Commander
-Timestamp: Saturday, June 21, 2025
-Successfully wrote to C:\Dev\ERPEAMIL directory!
