@@ -293,6 +293,16 @@ Container orchestration platforms like Kubernetes can automate much of the scali
 
 ## Troubleshooting
 
+### AI Service Timeouts
+
+If you experience frequent timeouts when interacting with the AI service, it's possible that you're hitting the rate limits of your API plan. The free or lower-tier plans for services like Anthropic's Claude have stricter limits on the number of requests you can make in a given period.
+
+If you suspect this is the case, you should:
+
+1.  **Check your API plan:** Log in to your Anthropic account and check your current plan and usage.
+2.  **Upgrade your plan:** If you're consistently hitting the rate limits, you may need to upgrade to a higher-tier plan.
+3.  **Implement batching:** If you're sending many small prompts in quick succession, consider batching them into a single, larger API call. This can help you stay within the rate limits and may also be more cost-effective.
+
 ### Common Issues and Solutions
 
 Even well-designed systems encounter occasional issues, especially during initial deployment and setup phases. Understanding common problems and their solutions helps you resolve issues quickly and maintain system reliability.

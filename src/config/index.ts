@@ -6,7 +6,6 @@
 
 import dotenv from 'dotenv';
 import Joi from 'joi';
-import path from 'path';
 
 // Load environment variables from .env file
 dotenv.config();
@@ -34,8 +33,7 @@ const envSchema = Joi.object({
   SUPABASE_SERVICE_KEY: Joi.string().required()
     .description('Supabase service key for admin operations'),
 
-  // AI Configuration (continued on next chunk for better readability)
-});  // AI Configuration
+  // AI Configuration
   ANTHROPIC_API_KEY: Joi.string().required()
     .description('Your Anthropic API key for Claude'),
   ANTHROPIC_MODEL: Joi.string()
@@ -78,7 +76,9 @@ const envSchema = Joi.object({
   // Storage Configuration
   STORAGE_BUCKET_RAW: Joi.string().default('raw-reports'),
   STORAGE_BUCKET_PROCESSED: Joi.string().default('processed-reports'),
-  MAX_FILE_SIZE_MB: Joi.number().min(1).max(100).default(50),  // Security Settings
+  MAX_FILE_SIZE_MB: Joi.number().min(1).max(100).default(50),
+
+  // Security Settings
   JWT_SECRET: Joi.string().min(32).required()
     .description('Secret key for JWT tokens - must be at least 32 characters'),
   ENCRYPTION_KEY: Joi.string().length(32).required()
@@ -93,7 +93,7 @@ const envSchema = Joi.object({
     .default(900000), // 15 minutes
   RATE_LIMIT_MAX_REQUESTS: Joi.number()
     .min(1)
-    .default(100),
+    .default(1000),
 
   // Processing Configuration
   MAX_PROCESSING_TIME_MS: Joi.number()
@@ -109,7 +109,9 @@ const envSchema = Joi.object({
   // Feature Flags
   ENABLE_OCR: Joi.boolean().default(false),
   ENABLE_DASHBOARD: Joi.boolean().default(false),
-  ENABLE_API_ACCESS: Joi.boolean().default(false),  // Monitoring (Optional)
+  ENABLE_API_ACCESS: Joi.boolean().default(false),
+
+  // Monitoring (Optional)
   SENTRY_DSN: Joi.string().uri().allow('').default(''),
   DATADOG_API_KEY: Joi.string().allow('').default(''),
 

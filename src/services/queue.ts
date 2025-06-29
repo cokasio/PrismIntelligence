@@ -9,10 +9,10 @@ import { createBullBoard } from '@bull-board/api';
 import { BullAdapter } from '@bull-board/api/bullAdapter';
 import { ExpressAdapter } from '@bull-board/express';
 import config from '../config';
-import { queueLogger } from '../utils/logger';
+import { queueLogger, emailLogger } from '../utils/logger';
 import { db } from './database';
 import { emailService } from './email';
-import { aiService } from './ai';
+import { aiService, AIAnalysisResult } from './ai';
 import { pdfParser } from '../parsers/pdf';
 import { excelParser } from '../parsers/excel';
 import { csvParser } from '../parsers/csv';
@@ -36,7 +36,7 @@ export interface ReportProcessingJob {
 export interface EmailDeliveryJob {
   reportId: string;
   recipientEmail: string;
-  analysisData: any;
+  analysisData: AIAnalysisResult;
   reportType: string;
 }
 
@@ -183,7 +183,7 @@ reportQueue.process('analyze-report', async (job) => {
 
     // Store insights
     if (analysisResult.pass3_insights.success && analysisResult.pass3_insights.data.length > 0) {
-      const insights = analysisResult.pass3_insights.data.map(insight => ({
+      const insights = analysisResult.pass3_insights.data.map((insight: any) => ({
         report_id: reportId,
         organization_id: job.data.organizationId,
         property_id: null, // Would be extracted from report
@@ -200,7 +200,7 @@ reportQueue.process('analyze-report', async (job) => {
 
     // Store actions
     if (analysisResult.pass4_actions.success && analysisResult.pass4_actions.data.length > 0) {
-      const actions = analysisResult.pass4_actions.data.map(action => ({
+      const actions = analysisResult.pass4_actions.data.map((action: any) => ({
         report_id: reportId,
         organization_id: job.data.organizationId,
         property_id: null,
@@ -274,9 +274,12 @@ reportQueue.process('analyze-report', async (job) => {
       processingTime: Date.now() - job.timestamp,
     };
 
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     queueLogger.error('Report processing failed', {
-      error,
+      error: errorMessage,
       reportId,
       jobId: job.id,
       attempt: job.attemptsMade,
@@ -289,9 +292,9 @@ reportQueue.process('analyze-report', async (job) => {
         report_id: reportId,
         stage: 'processing_failed',
         status: 'failed',
-        message: error.message,
+        message: errorMessage,
         error_details: { 
-          stack: error.stack,
+          stack: errorStack,
           attempt: job.attemptsMade,
         },
       });
@@ -299,7 +302,7 @@ reportQueue.process('analyze-report', async (job) => {
     // Update report status if this was the last attempt
     if (job.attemptsMade >= config.processing.retryAttempts - 1) {
       await db.updateReportStatus(reportId, 'failed', {
-        error_message: error.message,
+        error_message: errorMessage,
       });
 
       // Send error notification
@@ -307,7 +310,7 @@ reportQueue.process('analyze-report', async (job) => {
         senderEmail,
         reportId,
         filename,
-        error.message
+        errorMessage
       );
     }
 
@@ -335,7 +338,7 @@ emailQueue.process('deliver-analysis', async (job) => {
     // Create email subject
     const insightCount = analysisData.pass3_insights.data.length;
     const urgentActions = analysisData.pass4_actions.data.filter(
-      a => a.priority === 'urgent'
+      (a: any) => a.priority === 'urgent'
     ).length;
     
     let subject = `Your Property Analysis is Ready`;
@@ -346,11 +349,11 @@ emailQueue.process('deliver-analysis', async (job) => {
     }
 
     // Send the email
-    const sent = await emailService.sendAnalysisReport(
+    const sent = await emailService.sendResults(
       recipientEmail,
       reportId,
-      reportHtml,
-      subject
+      analysisData.pass3_insights.data,
+      analysisData.pass4_actions.data
     );
 
     if (sent) {
@@ -364,9 +367,10 @@ emailQueue.process('deliver-analysis', async (job) => {
       throw new Error('Email sending failed');
     }
 
-  } catch (error) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     emailLogger.error('Email delivery failed', {
-      error,
+      error: errorMessage,
       reportId,
       jobId: job.id,
       attempt: job.attemptsMade,
@@ -388,10 +392,11 @@ reportQueue.on('completed', (job, result) => {
 });
 
 reportQueue.on('failed', (job, err) => {
+  const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   queueLogger.error('Job failed', {
     jobId: job.id,
     reportId: job.data.reportId,
-    error: err.message,
+    error: errorMessage,
     failedReason: job.failedReason,
   });
 });
@@ -412,10 +417,11 @@ emailQueue.on('completed', (job) => {
 });
 
 emailQueue.on('failed', (job, err) => {
+  const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
   emailLogger.error('Email delivery failed', {
     jobId: job.id,
     reportId: job.data.reportId,
-    error: err.message,
+    error: errorMessage,
   });
 });
 
@@ -426,16 +432,21 @@ emailQueue.on('failed', (job, err) => {
 function calculateDueDate(relativeDueDate: string): string {
   const today = new Date();
   
+  if (!relativeDueDate) {
+    today.setDate(today.getDate() + 7); // Default to 1 week
+    return today.toISOString().split('T')[0];
+  }
+
   // Parse common patterns
   const daysMatch = relativeDueDate.match(/(\d+)\s*days?/i);
   const weeksMatch = relativeDueDate.match(/(\d+)\s*weeks?/i);
   const monthsMatch = relativeDueDate.match(/(\d+)\s*months?/i);
   
-  if (daysMatch) {
+  if (daysMatch && daysMatch[1]) {
     today.setDate(today.getDate() + parseInt(daysMatch[1]));
-  } else if (weeksMatch) {
+  } else if (weeksMatch && weeksMatch[1]) {
     today.setDate(today.getDate() + parseInt(weeksMatch[1]) * 7);
-  } else if (monthsMatch) {
+  } else if (monthsMatch && monthsMatch[1]) {
     today.setMonth(today.getMonth() + parseInt(monthsMatch[1]));
   } else if (relativeDueDate.toLowerCase().includes('immediate') || 
              relativeDueDate.toLowerCase().includes('urgent')) {
@@ -444,7 +455,7 @@ function calculateDueDate(relativeDueDate: string): string {
     today.setDate(today.getDate() + 7);  // Default to 1 week
   }
   
-  return today.toISOString().split('T')[0];  // Return YYYY-MM-DD
+  return today.toISOString().split('T')[0];
 }
 
 /**
@@ -463,7 +474,6 @@ export const queueService = {
     queueLogger.info('Report queued for processing', {
       reportId: jobData.reportId,
       jobId: job.id,
-      position: await job.getPosition(),
     });
     
     return job;

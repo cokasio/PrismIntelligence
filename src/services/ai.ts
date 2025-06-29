@@ -134,8 +134,8 @@ export class AIService {
       // Initialize result structure
       const result: AIAnalysisResult = {
         reportId,
-        pass1_extraction: await this.performPass1Extraction(reportText),
-        pass2_verification: { success: false, data: null as any, tokensUsed: 0 },
+        pass1_extraction: { success: false, data: {} as any, confidence: 0, tokensUsed: 0 },
+        pass2_verification: { success: false, data: {} as any, tokensUsed: 0 },
         pass3_insights: { success: false, data: [], tokensUsed: 0 },
         pass4_actions: { success: false, data: [], tokensUsed: 0 },
         totalTokensUsed: 0,
@@ -143,13 +143,10 @@ export class AIService {
         processingTime: 0,
       };
 
-      // Only continue if Pass 1 succeeded
-      if (result.pass1_extraction.success) {
-        result.pass2_verification = await this.performPass2Verification(
-          reportText,
-          result.pass1_extraction.data
-        );
-      }
+      // Perform combined extraction and verification
+      const { extraction, verification } = await this.performExtractionAndVerification(reportText);
+      result.pass1_extraction = extraction;
+      result.pass2_verification = verification;
 
       // Only continue if Pass 2 succeeded
       if (result.pass2_verification.success) {

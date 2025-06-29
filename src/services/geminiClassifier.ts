@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import path from 'path';
 import fs from 'fs/promises';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import { FileClassification } from './attachmentIntelligenceLoop';
 
 export class GeminiClassifier {
@@ -36,36 +36,68 @@ export class GeminiClassifier {
    * Classify a document using Gemini AI
    */
   async classifyDocument(filePath: string): Promise<FileClassification> {
-    try {
-      const filename = path.basename(filePath);
-      const fileExtension = path.extname(filePath).toLowerCase();
-      const fileStats = await fs.stat(filePath);
-      
-      // Get file preview based on type
-      const filePreview = await this.getFilePreview(filePath, fileExtension);
-      
-      // Create classification prompt
-      const prompt = this.buildClassificationPrompt(filename, fileExtension, fileStats.size, filePreview);
-      
-      // Generate classification
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const classification = this.parseClassificationResponse(response.text());
-      
-      logger.info(`🎯 Gemini classification for ${filename}:`, {
-        type: classification.documentType,
-        confidence: classification.confidence,
-        property: classification.propertyName
-      });
-      
-      return classification;
-      
-    } catch (error) {
-      logger.error('❌ Gemini classification failed:', error);
-      
-      // Return fallback classification
-      return this.getFallbackClassification(filePath);
+    for (let i = 0; i < 3; i++) {
+      try {
+        const filename = path.basename(filePath);
+        const fileExtension = path.extname(filePath).toLowerCase();
+        const fileStats = await fs.stat(filePath);
+        
+        // Get file preview based on type
+        const filePreview = await this.getFilePreview(filePath, fileExtension);
+        
+        // Create classification prompt
+        const prompt = this.buildClassificationPrompt(filename, fileExtension, fileStats.size, filePreview);
+        
+        // Generate classification
+        const result = await this.model.generateContent(prompt);
+        const response = await result.response;
+        const classification = this.parseClassificationResponse(response.text());
+        
+        logger.info(`🎯 Gemini classification for ${filename}:`, {
+          type: classification.documentType,
+          confidence: classification.confidence,
+          property: classification.propertyName
+        });
+        
+        return classification;
+        
+      } catch (error) {
+        if (error.message.includes('429')) {
+          const delay = Math.pow(2, i) * 1000;
+          logger.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          logger.error('❌ Gemini classification failed:', error);
+          
+          // Return fallback classification
+          return this.getFallbackClassification(filePath);
+        }
+      }
     }
+    logger.error('❌ Gemini classification failed after multiple retries.');
+    return this.getFallbackClassification(filePath);
+  }
+
+  /**
+   * Generate content with retry logic for rate limiting
+   */
+  private async generateWithRetry(prompt: string, maxRetries = 3, initialDelay = 1000) {
+    let retries = 0;
+    while (retries < maxRetries) {
+      try {
+        return await this.model.generateContent(prompt);
+      } catch (error: any) {
+        if (error.message.includes('429')) {
+          retries++;
+          const delay = initialDelay * Math.pow(2, retries);
+          logger.warn(`🚦 Rate limit hit. Retrying in ${delay}ms... (${retries}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error('Max retries reached for Gemini API');
   }
 
   /**
@@ -296,7 +328,7 @@ Analyze the file and provide your classification:
       }
 
       const testPrompt = "Respond with 'OK' if you can understand this message.";
-      const result = await this.model.generateContent(testPrompt);
+      const result = await this.generateWithRetry(testPrompt);
       const response = await result.response;
       
       return response.text().includes('OK');

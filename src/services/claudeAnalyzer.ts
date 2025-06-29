@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import { FileClassification } from './attachmentIntelligenceLoop';
 
 export interface GeneratedInsights {
@@ -25,13 +25,6 @@ export class ClaudeAnalyzer {
   private anthropic: Anthropic | null = null;
 
   constructor() {
-    // Will be initialized in initialize() method
-  }
-
-  /**
-   * Initialize the Claude AI service
-   */
-  async initialize(): Promise<void> {
     try {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) {
@@ -45,7 +38,7 @@ export class ClaudeAnalyzer {
       logger.info('✅ Claude AI initialized successfully');
     } catch (error) {
       logger.error('❌ Failed to initialize Claude AI:', error);
-      throw error;
+      this.anthropic = null;
     }
   }
 
@@ -53,54 +46,74 @@ export class ClaudeAnalyzer {
    * Generate insights from extracted document data
    */
   async generateInsights(extractedData: any, classification: FileClassification): Promise<GeneratedInsights> {
-    try {
-      if (!this.anthropic) {
-        await this.initialize();
-      }
-
-      const prompt = this.buildInsightPrompt(extractedData, classification);
-      
-      const message = await this.anthropic!.messages.create({
-        model: 'claude-3-sonnet-20240229',
-        max_tokens: 4096,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
-          }
-        ]
-      });
-
-      const response = message.content[0];
-      if (response.type !== 'text') {
-        throw new Error('Unexpected response type from Claude');
-      }
-
-      const insights = this.parseInsightResponse(response.text);
-      
-      logger.info(`💡 Generated insights for ${classification.documentType} document`);
-      
-      return insights;
-      
-    } catch (error) {
-      logger.error('❌ Claude insight generation failed:', error);
-      
-      // Return fallback insights
+    if (!this.anthropic) {
+      logger.error('❌ Claude AI is not initialized. Cannot generate insights.');
       return this.getFallbackInsights(extractedData, classification);
     }
+
+    const maxRetries = 3;
+    let attempt = 0;
+    let lastError: any;
+
+    while (attempt < maxRetries) {
+      try {
+        const prompt = this.buildInsightPrompt(extractedData, classification);
+        
+        const message = await this.anthropic.messages.create({
+          model: 'claude-3-sonnet-20240229',
+          max_tokens: 2048, // Reduced max_tokens for efficiency
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ]
+        });
+
+        const response = message.content[0];
+        if (response.type !== 'text') {
+          throw new Error('Unexpected response type from Claude');
+        }
+
+        const insights = this.parseInsightResponse(response.text);
+        
+        logger.info(`💡 Generated insights for ${classification.documentType} document`);
+        
+        return insights;
+        
+      } catch (error: any) {
+        lastError = error;
+        if (error.status === 429) {
+          attempt++;
+          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
+          logger.warn(`Rate limit hit. Retrying in ${delay}ms... (attempt ${attempt}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          logger.error('❌ Claude insight generation failed:', error);
+          return this.getFallbackInsights(extractedData, classification);
+        }
+      }
+    }
+
+    logger.error('❌ Claude insight generation failed after multiple retries:', lastError);
+    return this.getFallbackInsights(extractedData, classification);
   }
 
   /**
    * Build the insight generation prompt based on document type
    */
   private buildInsightPrompt(extractedData: any, classification: FileClassification): string {
+    const reportPeriodString = classification.reportPeriod
+      ? `${classification.reportPeriod.start || 'Not specified'} to ${classification.reportPeriod.end || 'Not specified'}`
+      : 'Not specified';
+
     const baseContext = `
 You are a senior property management analyst with 20+ years of experience. You understand the nuances of property operations, financial performance, and strategic decision-making in real estate.
 
 **Document Information:**
 - Type: ${classification.documentType}
 - Property: ${classification.propertyName || 'Unknown'}
-- Period: ${classification.reportPeriod ? `${classification.reportPeriod.start} to ${classification.reportPeriod.end}` : 'Not specified'}
+- Period: ${reportPeriodString}
 - Confidence: ${Math.round(classification.confidence * 100)}%
 
 **Extracted Data:**
@@ -126,53 +139,21 @@ ${JSON.stringify(extractedData, null, 2)}
    */
   private getFinancialAnalysisPrompt(): string {
     return `
-**Financial Analysis Task:**
-Analyze this property financial statement and provide actionable insights.
+Analyze the following property financial data. Provide actionable insights in JSON format.
 
-**Key Areas to Analyze:**
-1. **Revenue Performance**
-   - Total rental income vs. market rates
-   - Vacancy impact and trends
-   - Other income sources (parking, fees, etc.)
+**Analyze:**
+- Revenue vs. market rates, vacancy trends, other income.
+- Expense ratios, controllable vs. non-controllable, variances.
+- NOI trends, margins, cash flow.
+- KPIs: OER, Rev/SF, occupancy.
 
-2. **Expense Analysis**
-   - Operating expense ratios
-   - Controllable vs. non-controllable expenses
-   - Year-over-year variances
-
-3. **Net Operating Income (NOI)**
-   - NOI trends and margins
-   - Comparison to property type benchmarks
-   - Cash flow implications
-
-4. **Key Performance Indicators**
-   - Operating expense ratio
-   - Revenue per square foot
-   - Occupancy rates
-
-**Response Format (JSON):**
+**JSON Response:**
 {
-  "insights": {
-    "summary": "Executive summary of financial performance",
-    "keyFindings": ["Finding 1", "Finding 2", "Finding 3"],
-    "trends": ["Trend analysis"],
-    "risks": ["Identified risks"],
-    "opportunities": ["Growth opportunities"]
-  },
-  "actionItems": [
-    {
-      "priority": "high|medium|low",
-      "category": "Revenue|Expenses|Operations|Capital",
-      "description": "Specific action to take",
-      "deadline": "timeframe",
-      "estimatedCost": "cost estimate if applicable"
-    }
-  ],
-  "recommendations": ["Strategic recommendations"],
+  "insights": { "summary": "", "keyFindings": [], "trends": [], "risks": [], "opportunities": [] },
+  "actionItems": [{ "priority": "", "category": "", "description": "", "deadline": "", "estimatedCost": "" }],
+  "recommendations": [],
   "confidence": 0.95
 }
-
-Provide your analysis:
 `;
   }
 
@@ -181,53 +162,21 @@ Provide your analysis:
    */
   private getRentRollAnalysisPrompt(): string {
     return `
-**Rent Roll Analysis Task:**
-Analyze this property rent roll and identify key insights about tenant performance and leasing strategy.
+Analyze this rent roll for tenant performance and leasing strategy. Provide insights in JSON format.
 
-**Key Areas to Analyze:**
-1. **Occupancy & Vacancy**
-   - Current occupancy rate
-   - Vacancy trends and duration
-   - Unit mix analysis
+**Analyze:**
+- Occupancy/vacancy rates and trends.
+- Rental rates vs. market, new vs. renewal.
+- Lease expiration schedule and revenue at risk.
+- Tenant quality, payment history, concentration risk.
 
-2. **Rental Rate Analysis**
-   - Market rate comparisons
-   - Below-market units
-   - Renewal vs. new lease rates
-
-3. **Lease Expiration Schedule**
-   - Upcoming expirations
-   - Renewal risk assessment
-   - Revenue at risk
-
-4. **Tenant Quality & Risk**
-   - Payment history
-   - Lease term patterns
-   - Tenant concentration
-
-**Response Format (JSON):**
+**JSON Response:**
 {
-  "insights": {
-    "summary": "Executive summary of rent roll performance",
-    "keyFindings": ["Key tenant insights"],
-    "trends": ["Occupancy and rental trends"],
-    "risks": ["Leasing risks identified"],
-    "opportunities": ["Revenue optimization opportunities"]
-  },
-  "actionItems": [
-    {
-      "priority": "high|medium|low",
-      "category": "Leasing|Marketing|Tenant Relations|Revenue",
-      "description": "Specific leasing action",
-      "deadline": "when to complete",
-      "estimatedCost": "cost if applicable"
-    }
-  ],
-  "recommendations": ["Leasing strategy recommendations"],
+  "insights": { "summary": "", "keyFindings": [], "trends": [], "risks": [], "opportunities": [] },
+  "actionItems": [{ "priority": "", "category": "", "description": "", "deadline": "", "estimatedCost": "" }],
+  "recommendations": [],
   "confidence": 0.90
 }
-
-Provide your analysis:
 `;
   }
 
@@ -236,53 +185,21 @@ Provide your analysis:
    */
   private getLeaseAnalysisPrompt(): string {
     return `
-**Lease Document Analysis Task:**
-Analyze this lease document for key terms, risks, and opportunities.
+Analyze this lease for key terms, risks, and opportunities. Provide insights in JSON format.
 
-**Key Areas to Analyze:**
-1. **Critical Dates**
-   - Lease commencement and expiration
-   - Renewal options and terms
-   - Important deadlines
+**Analyze:**
+- Critical dates: commencement, expiration, renewals.
+- Financial terms: base rent, escalations, additional charges.
+- Risk assessment: tenant/landlord obligations, default clauses.
+- Strategic considerations: renewal likelihood, market position.
 
-2. **Financial Terms**
-   - Base rent and escalations
-   - Additional charges (CAM, utilities, etc.)
-   - Security deposits and guarantees
-
-3. **Risk Assessment**
-   - Tenant obligations and responsibilities
-   - Landlord obligations
-   - Default and remedy provisions
-
-4. **Strategic Considerations**
-   - Renewal likelihood
-   - Market positioning
-   - Portfolio impact
-
-**Response Format (JSON):**
+**JSON Response:**
 {
-  "insights": {
-    "summary": "Executive summary of lease terms",
-    "keyFindings": ["Key lease provisions"],
-    "trends": ["Market positioning insights"],
-    "risks": ["Legal and financial risks"],
-    "opportunities": ["Revenue or relationship opportunities"]
-  },
-  "actionItems": [
-    {
-      "priority": "high|medium|low",
-      "category": "Legal|Financial|Relationship|Operations",
-      "description": "Specific action needed",
-      "deadline": "deadline based on lease terms",
-      "estimatedCost": "cost estimate"
-    }
-  ],
-  "recommendations": ["Lease management recommendations"],
+  "insights": { "summary": "", "keyFindings": [], "trends": [], "risks": [], "opportunities": [] },
+  "actionItems": [{ "priority": "", "category": "", "description": "", "deadline": "", "estimatedCost": "" }],
+  "recommendations": [],
   "confidence": 0.85
 }
-
-Provide your analysis:
 `;
   }
 
@@ -291,53 +208,21 @@ Provide your analysis:
    */
   private getMaintenanceAnalysisPrompt(): string {
     return `
-**Maintenance Analysis Task:**
-Analyze this maintenance document for operational insights and cost optimization opportunities.
+Analyze this maintenance document for operational insights and cost savings. Provide insights in JSON format.
 
-**Key Areas to Analyze:**
-1. **Cost Analysis**
-   - Maintenance spend trends
-   - Cost per unit/square foot
-   - Vendor performance
+**Analyze:**
+- Cost trends, cost per unit/SF, vendor performance.
+- Operational efficiency: response times, recurring issues, preventive vs. reactive.
+- Asset condition, CapEx needs, life cycle planning.
+- Budget impact, variance, forecasting.
 
-2. **Operational Efficiency**
-   - Response times
-   - Recurring issues
-   - Preventive vs. reactive maintenance
-
-3. **Asset Condition**
-   - System health indicators
-   - Capital expenditure needs
-   - Life cycle planning
-
-4. **Budget Impact**
-   - Budget variance analysis
-   - Seasonal patterns
-   - Forecasting implications
-
-**Response Format (JSON):**
+**JSON Response:**
 {
-  "insights": {
-    "summary": "Executive summary of maintenance performance",
-    "keyFindings": ["Operational insights"],
-    "trends": ["Cost and performance trends"],
-    "risks": ["Asset and budget risks"],
-    "opportunities": ["Efficiency improvements"]
-  },
-  "actionItems": [
-    {
-      "priority": "high|medium|low",
-      "category": "Preventive|Emergency|Vendor|Budget",
-      "description": "Specific maintenance action",
-      "deadline": "timeframe for completion",
-      "estimatedCost": "cost estimate"
-    }
-  ],
-  "recommendations": ["Maintenance strategy recommendations"],
+  "insights": { "summary": "", "keyFindings": [], "trends": [], "risks": [], "opportunities": [] },
+  "actionItems": [{ "priority": "", "category": "", "description": "", "deadline": "", "estimatedCost": "" }],
+  "recommendations": [],
   "confidence": 0.80
 }
-
-Provide your analysis:
 `;
   }
 
@@ -346,38 +231,21 @@ Provide your analysis:
    */
   private getGeneralAnalysisPrompt(): string {
     return `
-**General Document Analysis Task:**
-Analyze this property management document and extract meaningful insights.
+Analyze this document and extract meaningful property management insights. Provide insights in JSON format.
 
-**Analysis Framework:**
-1. Identify the document's purpose and key information
-2. Extract any performance metrics or data points
-3. Assess potential impacts on property operations
-4. Identify any action items or follow-up needs
+**Analyze:**
+- Document purpose and key information.
+- Performance metrics and data points.
+- Impact on property operations.
+- Action items or follow-up needs.
 
-**Response Format (JSON):**
+**JSON Response:**
 {
-  "insights": {
-    "summary": "Summary of document contents",
-    "keyFindings": ["Important information found"],
-    "trends": ["Any patterns or trends"],
-    "risks": ["Potential concerns"],
-    "opportunities": ["Potential benefits"]
-  },
-  "actionItems": [
-    {
-      "priority": "high|medium|low",
-      "category": "General",
-      "description": "Action needed",
-      "deadline": "timeframe",
-      "estimatedCost": "if applicable"
-    }
-  ],
-  "recommendations": ["General recommendations"],
+  "insights": { "summary": "", "keyFindings": [], "trends": [], "risks": [], "opportunities": [] },
+  "actionItems": [{ "priority": "", "category": "", "description": "", "deadline": "", "estimatedCost": "" }],
+  "recommendations": [],
   "confidence": 0.60
 }
-
-Provide your analysis:
 `;
   }
 
@@ -409,7 +277,8 @@ Provide your analysis:
       };
       
     } catch (error) {
-      logger.warn('⚠️ Could not parse Claude insight response:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      logger.warn(`⚠️ Could not parse Claude insight response: ${errorMessage}`);
       logger.debug('Raw response:', responseText);
       
       // Return fallback with raw response
@@ -458,7 +327,8 @@ Provide your analysis:
           priority: 'medium' as const,
           category: 'Review',
           description: 'Manually review this document for important insights',
-          deadline: 'Within 1 week'
+          deadline: 'Within 1 week',
+          estimatedCost: undefined,
         }
       ],
       recommendations: ['Ensure document quality for better automated analysis'],
@@ -470,12 +340,12 @@ Provide your analysis:
    * Test the Claude connection
    */
   async testConnection(): Promise<boolean> {
+    if (!this.anthropic) {
+      logger.error('❌ Claude AI is not initialized. Cannot test connection.');
+      return false;
+    }
     try {
-      if (!this.anthropic) {
-        await this.initialize();
-      }
-
-      const message = await this.anthropic!.messages.create({
+      const message = await this.anthropic.messages.create({
         model: 'claude-3-sonnet-20240229',
         max_tokens: 100,
         messages: [

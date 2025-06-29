@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { attachmentIntelligenceLoop } from './services/attachmentIntelligenceLoop';
-import { logger } from './utils/logger';
+import logger from './utils/logger';
 import path from 'path';
 import fs from 'fs/promises';
 

@@ -2,7 +2,7 @@ import { watchFile, FSWatcher } from 'fs';
 import chokidar from 'chokidar';
 import path from 'path';
 import fs from 'fs/promises';
-import { logger } from '../utils/logger';
+import logger from '../utils/logger';
 import { GeminiClassifier } from './geminiClassifier';
 import { ClaudeAnalyzer } from './claudeAnalyzer';
 import { DatabaseService } from '../database/supabase';
@@ -39,7 +39,8 @@ export class AttachmentIntelligenceLoop {
   private claudeAnalyzer: ClaudeAnalyzer;
   private dbService: DatabaseService;
   private fileProcessor: FileProcessor;
-  private isProcessing = new Set<string>();
+  private processingQueue: string[] = [];
+  private isCurrentlyProcessing = false;
 
   constructor() {
     this.geminiClassifier = new GeminiClassifier();
@@ -156,9 +157,9 @@ export class AttachmentIntelligenceLoop {
     
     logger.info(`📁 File ${event}: ${filename}`);
 
-    // Skip if already processing
-    if (this.isProcessing.has(normalizedPath)) {
-      logger.debug(`⏳ Already processing: ${filename}`);
+    // Skip if already in the queue
+    if (this.processingQueue.includes(normalizedPath)) {
+      logger.debug(`⏳ Already in queue: ${filename}`);
       return;
     }
 
@@ -173,11 +174,28 @@ export class AttachmentIntelligenceLoop {
       return;
     }
 
-    // Process the file
-    this.processFile(normalizedPath).catch(error => {
-      logger.error(`❌ Error processing file ${filename}:`, error);
-      this.isProcessing.delete(normalizedPath);
-    });
+    // Add to the queue
+    this.processingQueue.push(normalizedPath);
+    this.startProcessing();
+  }
+
+  /**
+   * Start processing files from the queue
+   */
+  private async startProcessing(): Promise<void> {
+    if (this.isCurrentlyProcessing || this.processingQueue.length === 0) {
+      return;
+    }
+
+    this.isCurrentlyProcessing = true;
+    const filePath = this.processingQueue.shift();
+
+    if (filePath) {
+      await this.processFile(filePath);
+    }
+
+    this.isCurrentlyProcessing = false;
+    this.startProcessing();
   }
 
   /**
@@ -188,8 +206,6 @@ export class AttachmentIntelligenceLoop {
     const startTime = Date.now();
     
     try {
-      // Mark as processing
-      this.isProcessing.add(filePath);
       logger.info(`🔄 Processing: ${filename}`);
 
       // Step 1: Wait for file to be fully written (avoid partial reads)
@@ -240,9 +256,6 @@ export class AttachmentIntelligenceLoop {
       // Store error information
       await this.handleProcessingError(filePath, error as Error);
       
-    } finally {
-      // Always remove from processing set
-      this.isProcessing.delete(filePath);
     }
   }
 
