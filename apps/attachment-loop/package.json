@@ -1,1 +1,22 @@
-{  "name": "@prism/attachment-loop",  "version": "1.0.0",  "main": "main.ts",  "scripts": {    "start": "ts-node main.ts",    "dev": "ts-node --watch main.ts"  }} 
+{
+  "name": "@prism/attachment-loop",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "main.ts",
+  "scripts": {
+    "start": "node --import=tsx main.ts",
+    "dev": "nodemon --exec \"node --import=tsx main.ts\"",
+    "build": "tsc",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "chokidar": "^4.0.3",
+    "dotenv": "^17.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "nodemon": "^3.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3"
+  }
+}

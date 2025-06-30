@@ -1,0 +1,357 @@
+# Prism Intelligence - Cursor Rules
+
+## Project Overview
+Prism Intelligence is an AI-powered property management platform that transforms reports into actionable intelligence. It uses email-based workflows and file watching to process property management documents automatically using dual AI (Claude + Gemini).
+
+## Technology Stack
+- **Frontend**: Next.js 15 (App Router), React, TypeScript, Tailwind CSS
+- **Backend**: Node.js, TypeScript, Express
+- **AI Services**: Claude (Anthropic), Gemini (Google), OpenAI
+- **Database**: Supabase (PostgreSQL), Redis (queue management)
+- **File Processing**: Chokidar (file watching), various parsers (CSV, Excel, PDF)
+- **Email**: CloudMailin (webhook), SendGrid
+- **Development**: Docker, npm workspaces (monorepo)
+
+## Project Structure
+```
+PrismIntelligence/
+├── apps/                    # Application packages
+│   ├── dashboard/          # Next.js frontend (port 3000)
+│   ├── attachment-loop/    # File watcher service
+│   └── api/               # API services
+├── core/                   # Core business logic
+│   ├── ai/                # AI integrations
+│   ├── database/          # DB schemas & migrations
+│   └── processors/        # File processors
+├── packages/              # Shared packages
+│   ├── config/           # Shared configuration
+│   ├── types/            # TypeScript types
+│   └── utils/            # Shared utilities
+├── tools/                 # Development tools
+├── incoming/              # File drop folders (watched)
+└── processed/             # Processed files
+```
+
+## Key Features & Workflows
+
+### 1. Attachment Intelligence Loop
+The core feature that watches folders and processes files automatically:
+```bash
+npm run attachment-loop:dev  # Start file watcher
+# Drop files in C:\Dev\PrismIntelligence\incoming\
+```
+
+### 2. Email Processing
+CloudMailin webhook receives emails and processes attachments:
+- Endpoint: `/api/cloudmailin/webhook`
+- Extracts attachments and queues for processing
+
+### 3. AI Processing Pipeline
+- **Gemini**: Classifies documents and extracts structured data
+- **Claude**: Provides deep analysis and actionable insights
+- Orchestrators coordinate between AI services
+
+## Development Commands
+
+### Quick Start
+```bash
+# Install all dependencies
+npm install
+
+# Start everything (recommended)
+npm run dev
+
+# Start specific services
+npm run dashboard:dev      # Frontend only
+npm run attachment-loop:dev # File watcher only
+
+# Windows batch files
+start-prism-unified.bat    # Start all services
+stop-prism.bat            # Stop all services
+restart-prism.bat         # Restart all services
+```
+
+### Database Operations
+```bash
+npm run db:setup          # Initial setup
+npm run db:migrate        # Run migrations
+npm run db:reset          # Reset database
+
+# Supabase migrations
+cd core/database/services/supabase
+npm run migrate           # Apply migrations
+```
+
+### Testing
+```bash
+npm test                  # Run all tests
+npm run test:watch        # Watch mode
+npm run test:integration  # Integration tests only
+```
+
+### Code Quality
+```bash
+npm run lint              # Check code quality
+npm run lint:fix          # Auto-fix issues
+npm run format            # Format with Prettier
+npm run type-check        # TypeScript checking
+```
+
+## Coding Guidelines
+
+### TypeScript
+- Always use strict TypeScript types
+- Avoid `any` type - use `unknown` if necessary
+- Define interfaces for all data structures
+- Use type guards for runtime validation
+
+### File Organization
+- One component/service per file
+- Colocate tests with source files (*.test.ts)
+- Group related functionality in subdirectories
+- Use barrel exports (index.ts) for clean imports
+
+### Naming Conventions
+- **Files**: kebab-case (e.g., `attachment-processor.ts`)
+- **Classes/Interfaces**: PascalCase (e.g., `AttachmentProcessor`)
+- **Functions/Variables**: camelCase (e.g., `processAttachment`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_FILE_SIZE`)
+
+### Error Handling
+```typescript
+// Use custom error classes
+class ProcessingError extends Error {
+  constructor(message: string, public code: string) {
+    super(message);
+    this.name = 'ProcessingError';
+  }
+}
+
+// Always handle async errors
+try {
+  const result = await processFile(file);
+} catch (error) {
+  logger.error('File processing failed', { error, file });
+  // Handle gracefully
+}
+```
+
+### AI Service Integration
+```typescript
+// Use the orchestrators for coordinated AI operations
+import { ClaudeGeminiOrchestrator } from '@/core/ai/orchestrators';
+
+const orchestrator = new ClaudeGeminiOrchestrator();
+const result = await orchestrator.processDocument(document);
+
+// For simple operations, use services directly
+import { analyzeWithClaude } from '@/core/ai/analyzers/claude';
+const insights = await analyzeWithClaude(data);
+```
+
+## Environment Variables
+Create `.env` from `.env.example`:
+```env
+# Required for AI services
+ANTHROPIC_API_KEY=
+GOOGLE_API_KEY=
+OPENAI_API_KEY=
+
+# Database
+DATABASE_URL=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+
+# Email services
+SENDGRID_API_KEY=
+CLOUDMAILIN_USERNAME=
+CLOUDMAILIN_PASSWORD=
+
+# Redis
+REDIS_URL=redis://localhost:6379
+```
+
+## Common Tasks
+
+### Adding a New File Processor
+1. Create processor in `core/processors/parsers/`
+2. Implement the `FileProcessor` interface
+3. Register in `core/workflows/services/extractors.ts`
+4. Add tests in same directory
+
+### Creating a New API Endpoint
+1. Add route in `apps/api/routes/`
+2. Define types in `packages/types/`
+3. Add validation middleware
+4. Document in OpenAPI spec
+
+### Adding Database Migrations
+1. Create migration in `core/database/services/supabase/migrations/`
+2. Follow naming: `YYYYMMDDHHMMSS_description.sql`
+3. Test locally first: `npm run db:migrate`
+4. Include rollback statements
+
+### Implementing New AI Features
+1. Create service in `core/ai/`
+2. Use existing orchestrators when possible
+3. Implement retry logic and error handling
+4. Add cost tracking for API calls
+
+## Testing Best Practices
+- Write tests for all new features
+- Use descriptive test names
+- Mock external services (AI, email, etc.)
+- Test error cases thoroughly
+- Keep tests fast and isolated
+
+### Test Structure
+```typescript
+describe('AttachmentProcessor', () => {
+  beforeEach(() => {
+    // Setup
+  });
+
+  it('should process CSV files correctly', async () => {
+    // Arrange
+    const file = createMockFile('test.csv');
+    
+    // Act
+    const result = await processor.process(file);
+    
+    // Assert
+    expect(result.status).toBe('success');
+  });
+});
+```
+
+## Performance Considerations
+- Use streaming for large file processing
+- Implement request queuing for AI services
+- Cache AI responses when appropriate
+- Use database connection pooling
+- Monitor memory usage in file watchers
+
+## Security Guidelines
+- Validate all input data
+- Sanitize file uploads
+- Use environment variables for secrets
+- Implement rate limiting on APIs
+- Follow OWASP best practices
+- Never log sensitive data
+
+## Python Tools Available
+The project includes Python tools in the `tools/` directory for various operations:
+
+### Screenshot & Verification
+```bash
+# Take screenshot
+venv/bin/python tools/screenshot_utils.py URL [--output OUTPUT] [--width WIDTH] [--height HEIGHT]
+
+# Verify with LLM
+venv/bin/python tools/llm_api.py --prompt "Your question" --provider {openai|anthropic} --image screenshot.png
+```
+
+### LLM API
+```bash
+# Query LLM directly
+venv/bin/python tools/llm_api.py --prompt "Your question" --provider {openai|anthropic|deepseek|gemini|azure|local}
+```
+
+### Web Operations
+```bash
+# Scrape web pages
+venv/bin/python tools/web_scraper.py --max-concurrent 3 URL1 URL2 URL3
+
+# Search the web
+venv/bin/python tools/search_engine.py "search keywords"
+```
+
+## Debugging Tips
+- Use the logger utility for consistent logging
+- Check health endpoints: `http://localhost:3000/health`
+- Monitor file watcher logs for processing issues
+- Use Chrome DevTools for frontend debugging
+- Check Supabase logs for database issues
+- Use Python tools for batch processing when needed
+
+## Git Workflow
+- Branch naming: `feature/description` or `fix/description`
+- Commit messages: Use conventional commits
+- PR titles: Include "[Cursor]" prefix as per user rules
+- Always run tests before pushing
+- Keep PRs focused and small
+
+## Deployment Checklist
+- [ ] Update environment variables
+- [ ] Run database migrations
+- [ ] Build production assets
+- [ ] Test health endpoints
+- [ ] Verify AI service connections
+- [ ] Check file permissions for incoming/processed folders
+- [ ] Monitor initial logs for errors
+
+## Useful Resources
+- [Project README](./README.md)
+- [Attachment Intelligence Guide](./ATTACHMENT_INTELLIGENCE_QUICK_START.md)
+- [API Documentation](./docs/api/)
+- [Architecture Overview](./docs/architecture/overview.md)
+
+## Troubleshooting
+- **Backend crashes**: Check missing dependencies in package.json
+- **AI timeouts**: Verify API keys and rate limits
+- **File processing fails**: Check file permissions and formats
+- **Database errors**: Ensure migrations are up to date
+- **Frontend build issues**: Clear .next folder and rebuild
+
+## Notes for Cursor AI
+- When editing files, always read them first to understand context
+- Prefer modifying existing files over creating new ones
+- Use the file watcher logs to debug processing issues
+- Test changes incrementally
+- Keep the Scratchpad in this file updated with task progress
+- Update the Lessons section when you learn from mistakes or receive corrections
+- Use Python venv at ./venv for all Python operations
+- For multiline git commits, write message to file first, then use `git commit -F <filename>`
+- Include "[Cursor]" prefix in commit messages and PR titles
+- Include debugging info in program output
+
+## Lessons
+### User Specified Lessons
+- You have a python venv in ./venv. Use it.
+- Include info useful for debugging in the program output.
+- Read the file before you try to edit it.
+- Due to Cursor's limit, when you use git and gh and need to submit a multiline commit message, first write the message in a file, and then use git commit -F <filename> or similar command to commit. And then remove the file. Include "[Cursor] " in the commit message and PR title.
+
+### Cursor Learned
+- For search results, ensure proper handling of different character encodings (UTF-8) for international queries
+- Add debug information to stderr while keeping the main output clean in stdout for better pipeline integration
+- When using seaborn styles in matplotlib, use 'seaborn-v0_8' instead of 'seaborn' as the style name due to recent seaborn version changes
+- Use 'gpt-4o' as the model name for OpenAI's GPT-4 with vision capabilities
+- When searching for recent news, use the current year (2025) instead of previous years, or simply use the "recent" keyword to get the latest information
+- Aider-chat (version 0.80.0) is installed and can be accessed using `python -m aider` from the command line
+- When fixing TypeScript errors in Node.js projects, ensure proper tsconfig.json for Node.js (not Next.js), install necessary dependencies (dotenv, typescript), and fix type errors (use unknown instead of Error for generic error handlers)
+- The attachment-loop service requires environment variables set in .env file at the project root
+- PowerShell doesn't support && operator in single command lines - run commands separately
+
+## Scratchpad
+[Use this section to track current tasks and progress. Format:
+- Task: Brief description
+- Status: Planning/In Progress/Complete
+- Steps:
+  [X] Completed step
+  [ ] Pending step
+- Notes: Any important observations or blockers
+]
+
+### Current Tasks
+- Task: Fix attachment-loop:dev script execution error
+- Status: In Progress
+- Steps:
+  [X] Added missing attachment-loop:dev script to root package.json
+  [X] Fixed TypeScript configuration in apps/attachment-loop/tsconfig.json (changed from Next.js config to Node.js config)
+  [X] Fixed TypeScript error in attachmentIntelligenceLoop.ts (changed error parameter type from Error to unknown)
+  [X] Added dotenv dependency and import to main.ts
+  [X] Updated lessons learned with findings
+  [ ] Create .env file with required environment variables (blocked by globalIgnore)
+  [ ] Test the attachment-loop:dev script execution
+- Notes: The service requires environment variables (ANTHROPIC_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY) to be set in a .env file. The user needs to create this file manually with their actual API keys. 

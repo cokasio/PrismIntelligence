@@ -71,3 +71,4 @@ archive/
 # Config files with potential secrets
 supabase-config-example.txt
 utilities/.envwithAPIKeys.txt
+.aider*

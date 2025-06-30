@@ -350,3 +350,51 @@ Configuration management centralizes all environment-specific settings in a sing
 Thank you for choosing Prism Intelligence to transform your property management operations. This platform represents a new paradigm in property analysis that combines the power of AI with the simplicity that busy property managers need. As you implement and use the system, you'll discover that intelligent automation can dramatically improve both operational efficiency and decision-making quality.
 
 For support, questions, or contributions, visit our project repository or reach out to our development team. We're committed to continuously improving Prism Intelligence and helping you succeed in transforming property management through intelligent automation.
+
+## 📋 Development Setup
+
+### Cursor Rules & Quick Reference
+- **`.cursorrules`** - Comprehensive development guidelines and project structure
+- **`QUICK_REFERENCE.md`** - Quick command reference for common tasks
+
+## ✅ Fixed and Ready!
+
+I've successfully fixed the backend crash and created batch files to manage your Prism Intelligence services. Here's what I did:
+
+### 🔧 Fixes Applied:
+
+1. **Fixed Backend Crash**:
+   - Created missing `services/attachmentIntelligenceLoop.ts` 
+   - Created missing `utils/logger.ts`
+   - Added `chokidar` dependency to package.json
+   - Backend now starts successfully as a file watcher service
+
+2. **Fixed Frontend Warning**:
+   - Removed deprecated `appDir` option from `next.config.js`
+   - Next.js 15 uses app directory by default
+
+### 📁 Batch Files Created:
+
+1. **start-prism-unified.bat** - Starts both services in one window (recommended)
+2. **start-prism-separate.bat** - Starts services in separate windows
+3. **stop-prism.bat** - Stops all running services
+4. **restart-prism.bat** - Restarts all services
+5. **BATCH_FILES_README.md** - Documentation for all batch files
+
+### 🚀 To Start Fresh:
+
+```batch
+# First, stop any running services
+stop-prism.bat
+
+# Then start fresh
+start-prism-unified.bat
+```
+
+Your services should now start successfully:
+- **Frontend**: http://localhost:3000 (Next.js Dashboard)
+- **Backend**: File watcher monitoring `C:/Dev/PrismIntelligence/incoming/`
+
+The backend will watch for property management files dropped in the incoming folders and process them with AI. The frontend provides the web interface for viewing results.
+
+Try dropping a file in `C:/Dev/PrismIntelligence/incoming/` to see the file watcher in action! 🎉

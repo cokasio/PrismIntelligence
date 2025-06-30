@@ -1,9 +1,20 @@
 #!/usr/bin/env node
 
+import { config } from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get the current file's directory in ES module context
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from project root
+config({ path: path.join(__dirname, '../../.env') });
+
 import { attachmentIntelligenceLoop } from './services/attachmentIntelligenceLoop';
 import logger from './utils/logger';
-import path from 'path';
 import fs from 'fs/promises';
+import { pathToFileURL } from 'url';
 
 /**
  * Attachment Intelligence Loop Starter
@@ -29,158 +40,79 @@ async function checkEnvironment(): Promise<boolean> {
     }
   }
   
-  // Optional but recommended
-  const recommendedVars = ['GEMINI_API_KEY'];
-  const missingRecommended: string[] = [];
-  
-  for (const envVar of recommendedVars) {
-    if (!process.env[envVar]) {
-      missingRecommended.push(envVar);
-    }
-  }
-  
   if (missingVars.length > 0) {
     logger.error('❌ Missing required environment variables:');
-    missingVars.forEach(varName => {
-      logger.error(`   - ${varName}`);
+    missingVars.forEach(envVar => {
+      logger.error(`   - ${envVar}`);
     });
     logger.error('');
-    logger.error('Please set these in your .env file or environment.');
+    logger.error('Please add these to your .env file in the project root.');
+    logger.error('You can copy .env.example to .env and fill in the values.');
     return false;
-  }
-  
-  if (missingRecommended.length > 0) {
-    logger.warn('⚠️ Missing recommended environment variables:');
-    missingRecommended.forEach(varName => {
-      logger.warn(`   - ${varName}`);
-    });
-    logger.warn('The system will work but with limited functionality.');
-    logger.warn('');
   }
   
   logger.info('✅ Environment configuration looks good!');
   return true;
 }
 
-async function checkDirectories(): Promise<void> {
-  logger.info('📁 Checking directory structure...');
+async function checkDirectories(): Promise<boolean> {
+  logger.info('📁 Checking required directories...');
   
   const requiredDirs = [
-    'C:/Dev/PrismIntelligence/incoming',
-    'C:/Dev/PrismIntelligence/incoming/reports',
-    'C:/Dev/PrismIntelligence/incoming/financial',
-    'C:/Dev/PrismIntelligence/incoming/leases',
-    'C:/Dev/PrismIntelligence/incoming/maintenance',
-    'C:/Dev/PrismIntelligence/processed'
+    '../../incoming',
+    '../../processed',
+    '../../errors',
+    '../../logs'
   ];
+  
+  let allDirsExist = true;
   
   for (const dir of requiredDirs) {
     try {
       await fs.access(dir);
-      logger.info(`✅ ${dir}`);
-    } catch {
-      logger.info(`📁 Creating ${dir}...`);
-      await fs.mkdir(dir, { recursive: true });
-      logger.info(`✅ Created ${dir}`);
+      logger.info(`   ✅ ${dir} exists`);
+    } catch (error) {
+      logger.info(`   📁 Creating ${dir}...`);
+      try {
+        await fs.mkdir(dir, { recursive: true });
+        logger.info(`   ✅ Created ${dir}`);
+      } catch (createError) {
+        logger.error(`   ❌ Failed to create ${dir}:`, createError);
+        allDirsExist = false;
+      }
     }
   }
   
-  // Create error directory if it doesn't exist
-  try {
-    await fs.mkdir('C:/Dev/PrismIntelligence/errors', { recursive: true });
-  } catch {
-    // Directory already exists
-  }
-}
-
-async function displayWelcomeMessage(): Promise<void> {
-  const welcomeMessage = `
-🎉 ============================================
-    PRISM INTELLIGENCE 
-    Attachment Intelligence Loop
-============================================
-
-🧠 AI-Powered Property Document Processing
-   - Gemini AI for document classification
-   - Claude AI for business intelligence
-   - Automated insights and recommendations
-
-📂 Watching Directories:
-   📊 C:/Dev/PrismIntelligence/incoming/
-   💰 C:/Dev/PrismIntelligence/incoming/financial/
-   📋 C:/Dev/PrismIntelligence/incoming/reports/
-   📄 C:/Dev/PrismIntelligence/incoming/leases/
-   🔧 C:/Dev/PrismIntelligence/incoming/maintenance/
-
-🚀 How to Use:
-   1. Drop property management files in the incoming folders
-   2. AI automatically classifies and processes documents
-   3. Structured data and insights are stored in database
-   4. Review processed documents and action items
-
-⚡ Ready to transform property management with AI!
-============================================
-`;
-  
-  console.log(welcomeMessage);
-}
-
-async function displayInstructions(): Promise<void> {
-  logger.info('');
-  logger.info('📋 Quick Start Instructions:');
-  logger.info('');
-  logger.info('1. 📁 Drop Files: Place property management documents in:');
-  logger.info('   • C:/Dev/PrismIntelligence/incoming/financial/     (P&L, Balance Sheets)');
-  logger.info('   • C:/Dev/PrismIntelligence/incoming/reports/       (Rent Rolls, Summaries)');
-  logger.info('   • C:/Dev/PrismIntelligence/incoming/leases/        (Lease Agreements)');
-  logger.info('   • C:/Dev/PrismIntelligence/incoming/maintenance/   (Work Orders, Invoices)');
-  logger.info('');
-  logger.info('2. 🤖 AI Processing: Watch the logs as AI:');
-  logger.info('   • Classifies document types automatically');
-  logger.info('   • Extracts structured data from files');
-  logger.info('   • Generates business insights and trends');
-  logger.info('   • Creates actionable recommendations');
-  logger.info('');
-  logger.info('3. 📊 Review Results: Processed documents include:');
-  logger.info('   • Executive summaries of performance');
-  logger.info('   • Key findings and trend analysis');
-  logger.info('   • Risk identification and opportunities');
-  logger.info('   • Prioritized action items with deadlines');
-  logger.info('');
-  logger.info('4. 💾 Data Storage: All results stored in Supabase with:');
-  logger.info('   • Full audit trail and processing logs');
-  logger.info('   • Search and filtering capabilities');
-  logger.info('   • Performance analytics and reporting');
-  logger.info('');
-  logger.info('🎯 Pro Tip: Start with a sample financial report or rent roll!');
-  logger.info('');
+  return allDirsExist;
 }
 
 async function main(): Promise<void> {
+  logger.info('');
+  logger.info('🧠 Starting Prism Intelligence - Attachment Loop');
+  logger.info('==========================================');
+  logger.info('');
+  
   try {
-    // Display welcome message
-    await displayWelcomeMessage();
-    
     // Check environment
     const envOk = await checkEnvironment();
     if (!envOk) {
       process.exit(1);
     }
     
-    // Check and create directories
-    await checkDirectories();
-    
-    // Display instructions
-    await displayInstructions();
+    // Check directories
+    const dirsOk = await checkDirectories();
+    if (!dirsOk) {
+      logger.error('❌ Directory setup failed');
+      process.exit(1);
+    }
     
     // Start the attachment intelligence loop
-    logger.info('🚀 Starting Attachment Intelligence Loop...');
+    logger.info('🚀 Starting attachment intelligence loop...');
     await attachmentIntelligenceLoop.start();
     
-    // Setup graceful shutdown
+    // Handle graceful shutdown
     process.on('SIGINT', async () => {
-      logger.info('');
-      logger.info('🛑 Received shutdown signal...');
+      logger.info('🛑 Received termination signal...');
       await attachmentIntelligenceLoop.stop();
       logger.info('👋 Attachment Intelligence Loop stopped gracefully');
       process.exit(0);
@@ -207,7 +139,7 @@ async function main(): Promise<void> {
     }, 60000);
     
   } catch (error) {
-    logger.error('❌ Failed to start Attachment Intelligence Loop:', error);
+    logger.error('💥 Failed to start attachment intelligence loop:', error);
     process.exit(1);
   }
 }
@@ -224,8 +156,8 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-// Start the application
-if (require.main === module) {
+// Start the application (ES module equivalent of require.main === module)
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => {
     logger.error('Fatal error:', error);
     process.exit(1);

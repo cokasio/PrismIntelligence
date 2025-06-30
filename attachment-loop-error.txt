@@ -1,0 +1,19 @@
+I'm getting this error when trying to run the attachment-loop service:
+
+[AI-BACKEND] Starting with tsconfig-paths
+TypeError: Unknown file extension ".ts" for C:\Dev\PrismIntelligence\apps\attachment-loop\main.ts
+    at Object.getFileProtocolModuleFormat [as file:] (node:internal/modules/esm/get_format:219:9)
+    at defaultGetFormat (node:internal/modules/esm/get_format:245:36)
+    at defaultLoad (node:internal/modules/esm/load:120:22)
+    at async ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:580:32)
+    at async ModuleJob._link (node:internal/modules/esm/module_job:116:19) {
+  code: 'ERR_UNKNOWN_FILE_EXTENSION'
+}
+
+This happens when trying to run TypeScript files directly with Node.js. The attachment-loop service needs to be configured to properly handle TypeScript files. Please check and fix:
+
+1. The package.json scripts to ensure they use ts-node or tsx
+2. The tsconfig.json configuration  
+3. Any missing TypeScript dependencies
+
+The service should be able to run with `npm run attachment-loop:dev` from the root directory. 
