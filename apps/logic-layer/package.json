@@ -1,0 +1,28 @@
+{
+  "name": "@prism-intelligence/logic-layer",
+  "version": "1.0.0",
+  "description": "Critical Thinking Logic Layer - Propositional Calculus Engine for Prism Intelligence",
+  "main": "logic-engine.ts",
+  "scripts": {
+    "test": "npm run test:philosophy",
+    "test:philosophy": "ts-node tests/test-philosophy.ts",
+    "demo": "ts-node philosophical-demo.ts"
+  },
+  "keywords": [
+    "logic",
+    "propositional-calculus",
+    "formal-logic",
+    "reasoning",
+    "ai-validation",
+    "contradiction-detection"
+  ],
+  "author": "Prism Intelligence",
+  "license": "MIT",
+  "dependencies": {
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
