@@ -1,0 +1,27 @@
+{
+  "name": "@prism-intelligence/agent-coordination",
+  "version": "1.0.0",
+  "description": "Enhanced Agent Coordination with A2A2 + MCP Protocols - Multi-agent debate and consensus",
+  "main": "a2a2-protocol.ts",
+  "scripts": {
+    "test": "ts-node tests/test-a2a2.ts",
+    "demo": "ts-node a2a2-demo.ts"
+  },
+  "keywords": [
+    "multi-agent",
+    "consensus",
+    "a2a2",
+    "mcp",
+    "debate",
+    "coordination",
+    "ai-governance"
+  ],
+  "dependencies": {
+    "@prism-intelligence/logic-layer": "^1.0.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
