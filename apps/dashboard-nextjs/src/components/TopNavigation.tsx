@@ -2,24 +2,38 @@
 
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useRouter, usePathname } from 'next/navigation'
 import { 
   FileText, 
   Mail, 
   MessageSquare, 
   Search, 
   Settings, 
-  Terminal as TerminalIcon 
+  Terminal as TerminalIcon,
+  Upload,
+  BarChart3,
+  List
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Badge } from './ui/badge'
 
 export function TopNavigation() {
+  const router = useRouter()
+  const pathname = usePathname()
+
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: FileText },
-    { id: 'emails', label: 'Email Processing', icon: Mail, active: true },
-    { id: 'analytics', label: 'Analytics', icon: Search },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'tasks', label: 'Tasks', icon: List, path: '/tasks' },
+    { id: 'upload', label: 'Upload', icon: Upload, path: '/upload' },
+    { id: 'roi', label: 'ROI Dashboard', icon: BarChart3, path: '/roi' },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3, path: '/analytics' },
+    { id: 'emails', label: 'Emails', icon: Mail, path: '/emails' },
+    { id: 'properties', label: 'Properties', icon: FileText, path: '/properties' },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings' },
   ]
+
+  const isTabActive = (tabPath: string) => {
+    return pathname.startsWith(tabPath)
+  }
 
   return (
     <div className="h-12 border-b bg-card flex items-center justify-between px-4">
@@ -27,6 +41,8 @@ export function TopNavigation() {
       <div className="flex items-center space-x-1">
         {tabs.map((tab) => {
           const Icon = tab.icon
+          const isActive = isTabActive(tab.path)
+          
           return (
             <motion.div
               key={tab.id}
@@ -34,13 +50,14 @@ export function TopNavigation() {
               whileTap={{ scale: 0.98 }}
             >
               <Button
-                variant={tab.active ? "secondary" : "ghost"}
+                variant={isActive ? "secondary" : "ghost"}
                 size="sm"
                 className="h-8 px-3 text-xs"
+                onClick={() => router.push(tab.path)}
               >
                 <Icon className="h-3 w-3 mr-2" />
                 {tab.label}
-                {tab.id === 'emails' && (
+                {isActive && (
                   <Badge variant="outline" className="ml-2 text-xs">
                     Active
                   </Badge>
@@ -54,7 +71,7 @@ export function TopNavigation() {
       {/* Center - Current Context */}
       <div className="flex items-center space-x-2">
         <div className="text-sm text-muted-foreground">
-          Property Intelligence Platform
+          Prism Intelligence Platform
         </div>
       </div>
 

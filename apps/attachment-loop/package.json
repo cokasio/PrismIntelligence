@@ -10,8 +10,12 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.17.0",
+    "@google/generative-ai": "^0.24.1",
     "chokidar": "^4.0.3",
-    "dotenv": "^17.0.0"
+    "csv-parse": "^5.5.0",
+    "dotenv": "^17.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

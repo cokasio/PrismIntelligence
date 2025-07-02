@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sidebar_update_request>
+  <project>Prism Intelligence</project>
+  <component>Left Sidebar Navigation</component>
+  <update_type>Add Tab Navigation System</update_type>
+  
+  <requirements>
+    <tab_bar>
+      <placement>Below application header, above main navigation</placement>
+      <style>Horizontal pill-shaped buttons</style>
+      <behavior>Filter sidebar content based on active tab</behavior>
+      
+      <tabs>
+        <tab id="all" default="true">
+          <label>All</label>
+          <icon>none</icon>
+          <description>Shows complete navigation structure</description>
+          <content>
+            <item>Portfolio Command Center</item>
+            <item>Analysis Tools</item>
+            <item>Properties</item>
+            <item>My Workspace</item>
+            <item>Settings</item>
+          </content>
+        </tab>
+        
+        <tab id="starred">
+          <label>Starred</label>
+          <icon>⭐</icon>
+          <show_count>true</show_count>
+          <description>User-favorited items</description>
+          <content>
+            <item>Starred Properties</item>
+            <item>Starred Reports</item>
+            <item>Starred Insights</item>
+            <item>Starred Analyses</item>
+          </content>
+        </tab>
+        
+        <tab id="recent">
+          <label>Recent</label>
+          <icon>🕐</icon>
+          <show_badge>new_items</show_badge>
+          <description>Recently accessed items</description>
+          <content>
+            <item>Last Viewed Properties</item>
+            <item>Recent Reports</item>
+            <item>Recent Analyses</item>
+            <item>Recent Uploads</item>
+          </content>
+          <sorting>chronological_desc</sorting>
+          <limit>15</limit>
+        </tab>
+        
+        <tab id="lists">
+          <label>Lists</label>
+          <icon>📁</icon>
+          <show_count>true</show_count>
+          <description>Custom property groups</description>
+          <content>
+            <item>Smith Holdings (3)</item>
+            <item>Downtown Portfolio (2)</item>
+            <item>East Side Props (3)</item>
+            <item>Monthly Board Report (4)</item>
+            <item divider="true">+ Create New List</item>
+          </content>
+        </tab>
+      </tabs>
+    </tab_bar>
+    
+    <visual_design>
+      <colors>
+        <background>#0F172A</background>
+        <tab_active_bg>#1E293B</tab_active_bg>
+        <tab_active_text>#FFFFFF</tab_active_text>
+        <tab_inactive_text>#6B7280</tab_inactive_text>
+        <tab_hover_bg>#2D3748</tab_hover_bg>
+      </colors>
+      
+      <states>
+        <active>
+          <background>Slightly lighter than sidebar</background>
+          <text>White or bright</text>
+          <indicator>Bottom border or background pill</indicator>
+        </active>
+        <inactive>
+          <text>Muted gray</text>
+          <hover>Slight brightness increase</hover>
+        </inactive>
+      </states>
+      
+      <animations>
+        <tab_switch>150ms ease-in-out</tab_switch>
+        <content_transition>200ms fade</content_transition>
+      </animations>
+    </visual_design>
+    
+    <quick_actions>
+      <new_button>
+        <label>+ New</label>
+        <position>Above tabs</position>
+        <shortcut>Cmd/Ctrl + K</shortcut>
+        <actions>
+          <action>New Report</action>
+          <action>New Analysis</action>
+          <action>New Property</action>
+          <action>New List</action>
+        </actions>
+      </new_button>
+    </quick_actions>
+    
+    <behavior>
+      <tab_switching>
+        <type>Instant client-side</type>
+        <preserve_scroll>true</preserve_scroll>
+        <remember_selection>true</remember_selection>
+      </tab_switching>
+      
+      <content_filtering>
+        <all_tab>No filtering, show everything</all_tab>
+        <starred_tab>Filter to starred items only</starred_tab>
+        <recent_tab>Sort by last_accessed timestamp</recent_tab>
+        <lists_tab>Show only custom lists</lists_tab>
+      </content_filtering>
+    </behavior>
+    
+    <responsive_design>
+      <mobile>
+        <tabs>Horizontally scrollable</tabs>
+        <labels>Icons only on small screens</labels>
+      </mobile>
+      <tablet>
+        <tabs>Full width</tabs>
+        <labels>Icons + text</labels>
+      </tablet>
+    </responsive_design>
+  </requirements>
+  
+  <implementation_notes>
+    <priority>High</priority>
+    <framework>React/Next.js</framework>
+    <state_management>Use existing context or local state</state_management>
+    <accessibility>
+      <keyboard_navigation>Tab through tabs with arrow keys</keyboard_navigation>
+      <aria_labels>Proper labels for screen readers</aria_labels>
+    </accessibility>
+  </implementation_notes>
+</sidebar_update_request>
