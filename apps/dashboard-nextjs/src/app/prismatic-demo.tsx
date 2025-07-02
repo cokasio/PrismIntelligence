@@ -23,8 +23,14 @@ import {
   Brain,
   CheckCircle,
   AlertCircle,
-  Clock
+  Clock,
+  Zap,
+  Shield
 } from 'lucide-react'
+
+// Import Critical Thinking Logic Layer
+import { ProofBadge, LogicPanel } from '@/components/logic-layer/LogicComponents'
+import { LogicalAgentFactory, ValidatedInsight } from '../../logic-layer/agent-wrapper'
 
 // Prismatic Clarity Color System
 const prismColors = {
@@ -89,19 +95,54 @@ export default function PrismaticDashboard() {
   const [selectedItem, setSelectedItem] = useState(null)
   const [agentActivities, setAgentActivities] = useState([])
   const [showSuccess, setShowSuccess] = useState(false)
+  const [validatedInsights, setValidatedInsights] = useState<ValidatedInsight[]>([])
 
-  // Simulate agent activities
+  // Simulate agent activities with logic validation
   useEffect(() => {
-    const interval = setInterval(() => {
+    const runAgentSimulation = async () => {
+      // Create logically-wrapped agents
+      const insightAgent = LogicalAgentFactory.createAgent('InsightGeneratorAgent')
+      const complianceAgent = LogicalAgentFactory.createAgent('ComplianceAgent')
+      const riskAgent = LogicalAgentFactory.createAgent('RiskFlaggerAgent')
+
+      // Simulate property data from selected item
+      const propertyData = {
+        expenseIncrease: selectedItem?.id === '1' ? 15000 : 5000,
+        revenueGrowth: selectedItem?.id === '2' ? 0 : 2,
+        dscr: selectedItem?.id === '3' ? 1.1 : 1.5,
+        liquidityDays: selectedItem?.id === '3' ? 45 : 90,
+        latePayments: selectedItem?.id === '4' ? 3 : 1,
+        complaints: selectedItem?.id === '4' ? 4 : 0
+      }
+
+      const insights: ValidatedInsight[] = []
+      
+      // Generate insights based on selected item
+      if (selectedItem?.category === 'financial') {
+        const insight = await (insightAgent as any).generateInsight(propertyData)
+        insights.push(insight)
+        const compliance = await (complianceAgent as any).checkCompliance(propertyData)
+        insights.push(compliance)
+      } else if (selectedItem?.category === 'tenant') {
+        const risk = await (riskAgent as any).assessRisk(propertyData)
+        insights.push(risk)
+      }
+
+      setValidatedInsights(insights)
+
+      // Update agent activities
       const activities = [
         { agent: 'FinanceBot', action: 'Analyzing rent roll', status: 'active' },
         { agent: 'TenantBot', action: 'Processing inquiry', status: 'active' },
         { agent: 'MaintenanceBot', action: 'Scheduling inspection', status: 'completed' }
       ]
       setAgentActivities(activities[Math.floor(Math.random() * activities.length)])
-    }, 5000)
+    }
+
+    runAgentSimulation()
+    const interval = setInterval(runAgentSimulation, 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [selectedItem])
 
   return (
     <div className="flex h-screen bg-neutral-50">
@@ -154,7 +195,16 @@ export default function PrismaticDashboard() {
                       }}
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{item.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium truncate">{item.title}</p>
+                        {/* Add proof badge for validated items */}
+                        {validatedInsights.find(i => i.agentName.includes(item.category)) && (
+                          <ProofBadge 
+                            validation={validatedInsights.find(i => i.agentName.includes(item.category))?.validation || { valid: false, confidence: 0, explanation: '' }} 
+                            size="sm" 
+                          />
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 truncate">{item.preview}</p>
                       <div className="flex items-center gap-2 mt-1">
                         {item.hasAttachment && <Paperclip className="w-3 h-3 text-gray-400" />}
@@ -212,9 +262,18 @@ export default function PrismaticDashboard() {
             >
               <Card className="p-6 border-0 shadow-lg">
                 <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-xl font-semibold">{selectedItem.title}</h2>
-                    <p className="text-sm text-gray-500 mt-1">Analyzed by {selectedItem.agent}</p>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold">{selectedItem.title}</h2>
+                      <p className="text-sm text-gray-500 mt-1">Analyzed by {selectedItem.agent}</p>
+                    </div>
+                    {/* Show logic validation status */}
+                    {validatedInsights.length > 0 && (
+                      <ProofBadge 
+                        validation={validatedInsights[0]?.validation || { valid: false, confidence: 0, explanation: '' }} 
+                        size="md" 
+                      />
+                    )}
                   </div>
                   <Badge 
                     style={{ backgroundColor: prismColors[selectedItem.category] + '20', color: prismColors[selectedItem.category] }}
@@ -227,12 +286,33 @@ export default function PrismaticDashboard() {
                   <p className="text-gray-600">{selectedItem.preview}</p>
                   
                   <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h3 className="text-sm font-semibold text-blue-900 mb-2">AI Analysis</h3>
+                    <h3 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                      <Zap className="w-4 h-4" />
+                      AI Analysis with Logic Validation
+                    </h3>
                     <ul className="space-y-2 text-sm text-blue-800">
-                      <li>• Identified 3 action items requiring immediate attention</li>
-                      <li>• Potential cost savings of $2,300 if addressed this week</li>
-                      <li>• Recommended vendor: ABC Maintenance (98% satisfaction)</li>
+                      <li className="flex items-start gap-2">
+                        <Shield className="w-4 h-4 mt-0.5 text-blue-600" />
+                        <span>Identified 3 action items requiring immediate attention (Logically Proven)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Shield className="w-4 h-4 mt-0.5 text-blue-600" />
+                        <span>Potential cost savings of $2,300 if addressed this week (Confidence: 92%)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <Shield className="w-4 h-4 mt-0.5 text-blue-600" />
+                        <span>Recommended vendor: ABC Maintenance (98% satisfaction)</span>
+                      </li>
                     </ul>
+                    
+                    {/* Show logical proof if available */}
+                    {validatedInsights[0]?.validation.valid && (
+                      <div className="mt-3 pt-3 border-t border-blue-200">
+                        <p className="text-xs text-blue-700 font-mono">
+                          Proof: {validatedInsights[0].validation.explanation}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="mt-4 flex gap-2">
@@ -309,7 +389,12 @@ export default function PrismaticDashboard() {
         
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-4">
-            {/* Active Agents */}
+            {/* Critical Thinking Logic Layer */}
+            {validatedInsights.length > 0 && (
+              <LogicPanel insights={validatedInsights} />
+            )}
+            
+            {/* Active Agents with Logic Validation */}
             <Card className="p-4 border-0 shadow-sm">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-500" />
@@ -328,7 +413,15 @@ export default function PrismaticDashboard() {
                     <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">FinanceBot</p>
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      FinanceBot
+                      {validatedInsights.find(i => i.agentName === 'InsightGeneratorAgent') && (
+                        <ProofBadge 
+                          validation={validatedInsights.find(i => i.agentName === 'InsightGeneratorAgent')?.validation || { valid: false, confidence: 0, explanation: '' }} 
+                          size="sm" 
+                        />
+                      )}
+                    </p>
                     <p className="text-xs text-gray-500">Analyzing Q4 variance report...</p>
                   </div>
                   <Badge variant="outline" className="text-xs">92%</Badge>
