@@ -1,0 +1,26 @@
+{
+  "name": "@prism-intelligence/swarm-executor",
+  "version": "1.0.0",
+  "description": "Dynamic Recursive Swarm Executor - Multi-model orchestration with privacy-aware routing",
+  "main": "swarm-executor.ts",
+  "scripts": {
+    "test": "ts-node tests/test-swarm.ts",
+    "demo": "ts-node swarm-demo.ts"
+  },
+  "keywords": [
+    "swarm",
+    "ai-orchestration",
+    "model-routing",
+    "privacy",
+    "recursive-planning",
+    "multi-model"
+  ],
+  "dependencies": {
+    "@prism-intelligence/logic-layer": "^1.0.0",
+    "typescript": "^5.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.0",
+    "@types/node": "^20.0.0"
+  }
+}
