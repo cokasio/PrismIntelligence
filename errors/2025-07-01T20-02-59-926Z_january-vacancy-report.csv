@@ -1,0 +1,22 @@
+Property Name,Unit Number,Square Footage,Current Rent,Market Rent,Lease Start Date,Lease End Date,Tenant Name,Status,Days Vacant,Reason for Vacancy
+Sunset Apartments,101,850,1200,1250,2023-03-01,2024-03-01,Smith Family,Occupied,,
+Sunset Apartments,102,850,1180,1250,2023-07-15,2024-07-15,Johnson K.,Occupied,,
+Sunset Apartments,103,850,1250,1250,2024-01-01,2025-01-01,Williams R.,Occupied,,
+Sunset Apartments,104,850,0,1250,,,VACANT,Vacant,45,Non-renewal
+Sunset Apartments,105,1100,1450,1500,2023-09-01,2024-09-01,Davis M.,Occupied,,
+Oak Ridge Complex,201,950,1300,1350,2023-05-01,2024-05-01,Brown S.,Occupied,,
+Oak Ridge Complex,202,950,1320,1350,2023-11-01,2024-11-01,Miller J.,Occupied,,
+Oak Ridge Complex,203,950,0,1350,,,VACANT,Vacant,22,Eviction
+Oak Ridge Complex,204,1200,1650,1700,2023-08-15,2024-08-15,Wilson A.,Occupied,,
+Metro Plaza,301,750,1050,1100,2023-06-01,2024-06-01,Garcia L.,Occupied,,
+Metro Plaza,302,750,1080,1100,2023-12-01,2024-12-01,Rodriguez M.,Occupied,,
+Metro Plaza,303,750,0,1100,,,VACANT,Vacant,12,Voluntary move-out
+Metro Plaza,304,750,1100,1100,2024-01-15,2025-01-15,Anderson P.,Occupied,,
+Riverside Gardens,401,1000,1400,1450,2023-04-01,2024-04-01,Thompson B.,Occupied,,
+Riverside Gardens,402,1000,1425,1450,2023-10-01,2024-10-01,White C.,Occupied,,
+Riverside Gardens,403,1000,1450,1450,2024-01-01,2025-01-01,Taylor D.,Occupied,,
+Downtown Towers,501,1200,1800,1850,2023-02-01,2024-02-01,Martin E.,Occupied,,
+Downtown Towers,502,1200,0,1850,,,VACANT,Vacant,8,Voluntary move-out
+Downtown Towers,503,1400,2100,2200,2023-09-15,2024-09-15,Clark F.,Occupied,,
+Parkview Estates,601,900,1250,1300,2023-07-01,2024-07-01,Lewis G.,Occupied,,
+Parkview Estates,602,900,0,1300,,,VACANT,Vacant,35,Non-renewal

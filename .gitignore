@@ -1,8 +1,29 @@
-# Prism Intelligence
-# World's First Transparent AI Property Management Platform
+# Dependencies
+node_modules/
+.npm
+.pnpm-debug.log*
+.yarn-integrity
+
+# Production builds
+dist/
+build/
+.next/
+out/
+
+# Environment files with API keys
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+.env.staging
+*.env
+**/utilities/.envwithAPIKeys.txt
+**/.envwithAPIKeys.txt
 
 # Logs
-logs/
+logs
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -22,20 +43,7 @@ coverage/
 # nyc test coverage
 .nyc_output
 
-# Grunt intermediate storage
-.grunt
-
-# Bower dependency directory
-bower_components
-
-# node-waf configuration
-.lock-wscript
-
-# Compiled binary addons
-build/Release
-
 # Dependency directories
-node_modules/
 jspm_packages/
 
 # TypeScript cache
@@ -62,312 +70,88 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# parcel-bundler cache
+# parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
-# Next.js build output
-.next
-out/
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
 
-# Nuxt.js build / generate output
-.nuxt
-dist
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# Editor directories and files
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS generated files
-Thumbs.db
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
+Thumbs.db
 
-# API Keys and Secrets (CRITICAL - NEVER COMMIT)
-.env.production
-.env.staging
-.secrets/
-*.key
-*.pem
-config/secrets.js
-config/production.js
+# Temporary files
+temp/
+tmp/
+*.tmp
 
-# AI Model Caches
-ai-cache/
-model-cache/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# API Keys and Secrets (CRITICAL SECURITY)
+**/test-api-keys/
+**/api-keys/
+**/*api-key*
+**/*secret*
+**/*token*
+**/*.pem
+**/*.key
+**/*.crt
+**/*.p12
+**/*.pfx
+
+# Archive directories (often contain sensitive data)
+archive/
+backup/
+legacy/
+old/
+
+# Development cache
+.cache/
+.aider.*
+
+# Test outputs
+test-results/
+coverage/
+
+# AI model cache
 *.model
 *.bin
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# File uploads and processing
-uploads/
-processed/
-incoming/
-temp-files/
-*.pdf
-*.xlsx
-*.xls
-*.csv
-!test-data/*.pdf
-!test-data/*.xlsx
-!test-data/*.csv
-
-# Document processing temporary files
-document-temp/
-ocr-temp/
-
-# Build outputs
-build/
-dist/
-*.tgz
-*.tar.gz
-
-# Testing
-test-results/
-playwright-report/
-test-results/
-coverage/
-*.coverage
-.nyc_output
-
-# Monitoring and logs
-monitoring/
-metrics/
-health-logs/
-
-# Production deployment
-deployment/
-kubernetes/
-terraform/
-.terraform/
-
-# Development tools
-.history/
-.vscode/
-.idea/
-
-# Package managers
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
-
-# Docker
-.dockerignore
-Dockerfile.prod
-
-# Backup files
+# Local database backups
 *.backup
 *.bak
-backup/
 
-# Error logs
-error.log
-debug.log
-access.log
+# CloudMailin test files
+cloudmailin-test-*
 
-# Cache directories
-.cache/
-.tmp/
-.temp/
+# Deployment secrets
+deployment/secrets/
+deployment/keys/
+deployment/*.env
 
-# IDE and editor files
-*.swp
-*.swo
-*~
-
-# Local development
-.local/
-local-config/
-
-# Performance monitoring
-newrelic_agent.log
-.newrelic_agent.log
-
-# Encryption keys (SECURITY CRITICAL)
-encryption-keys/
-master.key
-*.enc
-
-# Voice processing temporary files
-voice-temp/
-audio-cache/
-speech-temp/
-
-# AI debugging files
-ai-debug/
-agent-logs/
-debate-logs/
-
-# Windows specific
-desktop.ini
-$RECYCLE.BIN/
-
-# macOS specific
-.AppleDouble
-.LSOverride
-Icon
-
-# Linux specific
-*~
-
-# JetBrains IDEs
-.idea/
-*.iws
-*.iml
-*.ipr
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# Vim
-*.swp
-*.swo
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# VSCode
-.vscode/
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-
-# WebStorm
-.idea/
-
-# Production configuration (SECURITY)
-config/production.json
-config/secrets.json
-
-# SSL Certificates
-*.crt
-*.csr
-*.key
-*.pem
-ssl/
-
-# Terraform
-*.tfstate
-*.tfstate.*
-.terraform/
-.terraform.lock.hcl
-
-# Ansible
-*.retry
-
-# Kubernetes
-kubeconfig
-*.kubeconfig
-
-# Cloud provider credentials
-.aws/
-.gcp/
-.azure/
-
-# Monitoring tools
-grafana/
-prometheus/
-
-# Load testing
-artillery/
-k6/
-
-# Documentation build
-docs/_site/
-docs/.jekyll-cache/
-
-# Dependency vulnerability reports
-audit/
-security/
-
-# Performance benchmarks
-benchmarks/
-perf/
-
-# AI model fine-tuning data
-training-data/
-fine-tuning/
-model-outputs/
-
-# Voice recognition models
-voice-models/
-speech-cache/
-
-# Image processing
-images/processed/
-thumbnails/
-
-# Generated documentation
-docs/generated/
-api-docs/
-
-# Temporary markdown files
-*.tmp.md
-
-# Redis dump
-dump.rdb
-
-# SQLite databases
-*.sqlite
-*.sqlite3
-*.db
-
-# PostgreSQL
-*.sql.backup
-
-# MongoDB
-*.bson
-
-# Elasticsearch
-elasticsearch/data/
-
-# Analytics data
-analytics/
-events/
-tracking/
+# Production configuration
+config/production/
+config/secrets/

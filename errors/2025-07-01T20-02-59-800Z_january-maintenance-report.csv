@@ -1,0 +1,17 @@
+Property Name,Maintenance Type,Description,Cost,Date Completed,Vendor,Unit Number,Priority Level
+Sunset Apartments,HVAC,Replace air handler unit 3,2850,2024-01-15,Climate Control Services,Apt 301,High
+Sunset Apartments,Plumbing,Repair kitchen sink leak,145,2024-01-18,Mike's Plumbing,Apt 205,Medium
+Oak Ridge Complex,Electrical,Replace breaker panel,1200,2024-01-22,Elite Electric,Building B,High
+Oak Ridge Complex,Landscaping,Monthly grounds maintenance,450,2024-01-31,Green Thumb Landscaping,,Low
+Metro Plaza,Roofing,Repair leak in lobby ceiling,890,2024-01-12,Acme Roofing,,High
+Metro Plaza,Flooring,Replace carpet in common area,1650,2024-01-25,Flooring Plus,,Medium
+Riverside Gardens,Plumbing,Unclog main drain line,325,2024-01-08,Rooter Solutions,,Medium
+Riverside Gardens,Painting,Touch up exterior paint,750,2024-01-30,Pro Painters,,Low
+Downtown Towers,Security,Install new camera system,3200,2024-01-20,SecureTech Solutions,,High
+Downtown Towers,HVAC,Service boiler system,580,2024-01-10,Heating Experts,,Medium
+Parkview Estates,Appliance,Replace refrigerator,850,2024-01-14,Appliance Depot,Apt 102,Medium
+Parkview Estates,General,Monthly cleaning supplies,125,2024-01-31,Supply Company,,Low
+Hillside Manor,Electrical,Install new lighting in parking,1100,2024-01-28,Bright Lights Electric,,Medium
+Hillside Manor,Plumbing,Replace water heater,1400,2024-01-16,Hot Water Pro,Apt 305,High
+Lakefront Village,Grounds,Snow removal service,275,2024-01-05,Snow Busters,,Medium
+Lakefront Village,General,Replace lobby furniture,2200,2024-01-21,Office Furniture Co,,Low
