@@ -19,7 +19,10 @@
     "type-check": "cd apps/dashboard && npm run type-check",
     "test": "jest",
     "setup": "call scripts\\setup.bat",
-    "clean": "if exist .next rmdir /s /q .next && cd apps/dashboard && if exist .next rmdir /s /q .next"
+    "clean": "if exist .next rmdir /s /q .next && cd apps/dashboard && if exist .next rmdir /s /q .next",
+    "demo": "node start-demo.js",
+    "seed": "node seed-demo-data.js",
+    "seed:generate": "ts-node apps/api/services/demo-document-generator.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.0",

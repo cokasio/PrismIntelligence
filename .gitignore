@@ -1,74 +1,373 @@
-# Dependencies
-node_modules/
+# Prism Intelligence
+# World's First Transparent AI Property Management Platform
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
-# Next.js
-.next/
-out/
-dist/
-build/
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Environment files
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+# parcel-bundler cache
+.cache
+.parcel-cache
 
-# OS
+# Next.js build output
+.next
+out/
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Temporary folders
+tmp/
+temp/
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+Thumbs.db
 .DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db
 
-# Backup code
-backupcode/
+# API Keys and Secrets (CRITICAL - NEVER COMMIT)
+.env.production
+.env.staging
+.secrets/
+*.key
+*.pem
+config/secrets.js
+config/production.js
 
-# Logs
-logs/
-*.log
-
-# Temporary files
-tmp/
-temp/
+# AI Model Caches
+ai-cache/
+model-cache/
+*.model
+*.bin
 
 # Database
 *.db
 *.sqlite
+*.sqlite3
+
+# File uploads and processing
+uploads/
+processed/
+incoming/
+temp-files/
+*.pdf
+*.xlsx
+*.xls
+*.csv
+!test-data/*.pdf
+!test-data/*.xlsx
+!test-data/*.csv
+
+# Document processing temporary files
+document-temp/
+ocr-temp/
+
+# Build outputs
+build/
+dist/
+*.tgz
+*.tar.gz
 
 # Testing
+test-results/
+playwright-report/
+test-results/
 coverage/
-.nyc_output/
+*.coverage
+.nyc_output
 
-# Supabase
-**/supabase/.temp
-**/supabase/.env
+# Monitoring and logs
+monitoring/
+metrics/
+health-logs/
 
-# Prism Intelligence Specific
-processed/
-errors/
-incoming/*.csv
-incoming/**/*.csv
-test-*.js
-demo-*.js
-*.bat
-*.sh
-venv/
-unneeded/
-archive/
+# Production deployment
+deployment/
+kubernetes/
+terraform/
+.terraform/
 
-# Config files with potential secrets
-supabase-config-example.txt
-utilities/.envwithAPIKeys.txt
-.aider*
+# Development tools
+.history/
+.vscode/
+.idea/
+
+# Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Docker
+.dockerignore
+Dockerfile.prod
+
+# Backup files
+*.backup
+*.bak
+backup/
+
+# Error logs
+error.log
+debug.log
+access.log
+
+# Cache directories
+.cache/
+.tmp/
+.temp/
+
+# IDE and editor files
+*.swp
+*.swo
+*~
+
+# Local development
+.local/
+local-config/
+
+# Performance monitoring
+newrelic_agent.log
+.newrelic_agent.log
+
+# Encryption keys (SECURITY CRITICAL)
+encryption-keys/
+master.key
+*.enc
+
+# Voice processing temporary files
+voice-temp/
+audio-cache/
+speech-temp/
+
+# AI debugging files
+ai-debug/
+agent-logs/
+debate-logs/
+
+# Windows specific
+desktop.ini
+$RECYCLE.BIN/
+
+# macOS specific
+.AppleDouble
+.LSOverride
+Icon
+
+# Linux specific
+*~
+
+# JetBrains IDEs
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# WebStorm
+.idea/
+
+# Production configuration (SECURITY)
+config/production.json
+config/secrets.json
+
+# SSL Certificates
+*.crt
+*.csr
+*.key
+*.pem
+ssl/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Ansible
+*.retry
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
+
+# Cloud provider credentials
+.aws/
+.gcp/
+.azure/
+
+# Monitoring tools
+grafana/
+prometheus/
+
+# Load testing
+artillery/
+k6/
+
+# Documentation build
+docs/_site/
+docs/.jekyll-cache/
+
+# Dependency vulnerability reports
+audit/
+security/
+
+# Performance benchmarks
+benchmarks/
+perf/
+
+# AI model fine-tuning data
+training-data/
+fine-tuning/
+model-outputs/
+
+# Voice recognition models
+voice-models/
+speech-cache/
+
+# Image processing
+images/processed/
+thumbnails/
+
+# Generated documentation
+docs/generated/
+api-docs/
+
+# Temporary markdown files
+*.tmp.md
+
+# Redis dump
+dump.rdb
+
+# SQLite databases
+*.sqlite
+*.sqlite3
+*.db
+
+# PostgreSQL
+*.sql.backup
+
+# MongoDB
+*.bson
+
+# Elasticsearch
+elasticsearch/data/
+
+# Analytics data
+analytics/
+events/
+tracking/

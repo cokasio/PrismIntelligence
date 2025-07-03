@@ -1,0 +1,37 @@
+PROPERTY: Sunset Gardens Apartments
+PERIOD: January 2024
+
+INCOME STATEMENT
+================
+
+REVENUE:
+Rental Income: $125,000
+Other Income: $3,500
+Total Revenue: $128,500
+
+EXPENSES:
+Maintenance & Repairs: $12,000 (Budget: $8,900)
+Utilities: $18,500 (Budget: $15,400)
+Property Management: $8,995
+Insurance: $4,200
+Property Tax: $12,300
+Other Operating: $5,000
+Total Expenses: $60,995
+
+NET OPERATING INCOME: $67,505
+
+VARIANCES FROM BUDGET:
+- Maintenance: $3,100 over budget (35% variance)
+- Utilities: $3,100 over budget (20% variance)
+- Total unfavorable variance: $6,200
+
+KEY ISSUES:
+1. HVAC system failures causing high utility costs
+2. Water damage in units 205, 312, and 418
+3. 8% vacancy rate (target is 5%)
+4. Three tenants with rent payments over 30 days late
+
+URGENT ITEMS:
+- Fire inspection scheduled for next week
+- Insurance renewal due in 30 days
+- Roof repair needed before rainy season
