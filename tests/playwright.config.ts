@@ -1,182 +1,105 @@
-/**
- * Playwright Configuration for E2E Tests
- * End-to-end testing configuration for Prism Intelligence
- */
-
 import { defineConfig, devices } from '@playwright/test';
 
+/**
+ * Playwright Configuration for Prism Intelligence E2E Tests
+ * See https://playwright.dev/docs/test-configuration.
+ */
 export default defineConfig({
-  // Test directory
-  testDir: './tests/e2e',
+  testDir: '../e2e',
   
-  // Timeout settings
-  timeout: 30000,
-  expect: {
-    timeout: 10000,
-  },
+  /* Run tests in files in parallel */
+  fullyParallel: true,
   
-  // Fail the build on CI if you accidentally left test.only in the source code
+  /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   
-  // Retry settings
+  /* Retry on CI only */
   retries: process.env.CI ? 2 : 0,
   
-  // Parallel workers
+  /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   
-  // Reporter configuration
+  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html', { outputFolder: 'coverage/playwright-report' }],
-    ['json', { outputFile: 'coverage/playwright-results.json' }],
-    ['junit', { outputFile: 'coverage/playwright-junit.xml' }],
-    process.env.CI ? ['github'] : ['list'],
+    ['html', { outputFolder: '../coverage/playwright-report' }],
+    ['junit', { outputFile: '../coverage/playwright-junit.xml' }],
+    ['list']
   ],
   
-  // Global test configuration
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    // Base URL for tests
-    baseURL: 'http://localhost:3001',
+    /* Base URL to use in actions like `await page.goto('/')`. */
+    baseURL: 'http://localhost:3000',
     
-    // Browser settings
-    headless: !!process.env.CI,
-    viewport: { width: 1280, height: 720 },
+    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
+    trace: 'on-first-retry',
     
-    // Capture settings
+    /* Take screenshot on failure */
     screenshot: 'only-on-failure',
+    
+    /* Record video on failure */
     video: 'retain-on-failure',
-    trace: 'retain-on-failure',
     
-    // Context options
-    ignoreHTTPSErrors: true,
-    
-    // Action timeout
-    actionTimeout: 10000,
-    
-    // Navigation timeout
-    navigationTimeout: 30000,
-    
-    // Locale and timezone
-    locale: 'en-US',
-    timezoneId: 'America/New_York',
+    /* Wait for network to be idle */
+    waitForTimeout: 30000,
   },
-  
-  // Test output directory
-  outputDir: 'coverage/playwright-artifacts',
-  
-  // Global setup and teardown
-  globalSetup: './tests/e2e/global-setup.ts',
-  globalTeardown: './tests/e2e/global-teardown.ts',
-  
-  // Configure projects for major browsers
+
+  /* Configure projects for major browsers */
   projects: [
-    // Desktop browsers
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: /.*\.spec\.ts/,
     },
     
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testMatch: /.*\.spec\.ts/,
     },
     
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testMatch: /.*\.spec\.ts/,
     },
-    
-    // Mobile browsers
+
+    /* Test against mobile viewports. */
     {
-      name: 'mobile-chrome',
+      name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
-      testMatch: /.*\.mobile\.spec\.ts/,
     },
     
     {
-      name: 'mobile-safari',
+      name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
-      testMatch: /.*\.mobile\.spec\.ts/,
+    },
+
+    /* Test against branded browsers. */
+    {
+      name: 'Microsoft Edge',
+      use: { ...devices['Desktop Edge'], channel: 'msedge' },
     },
     
-    // Tablet
     {
-      name: 'tablet',
-      use: { ...devices['iPad Pro'] },
-      testMatch: /.*\.tablet\.spec\.ts/,
-    },
-    
-    // Accessibility tests
-    {
-      name: 'accessibility',
-      use: { ...devices['Desktop Chrome'] },
-      testMatch: /.*\.a11y\.spec\.ts/,
-    },
-    
-    // Performance tests
-    {
-      name: 'performance',
-      use: { 
-        ...devices['Desktop Chrome'],
-        // Enable performance metrics
-        launchOptions: {
-          args: ['--enable-precise-memory-info']
-        }
-      },
-      testMatch: /.*\.performance\.spec\.ts/,
+      name: 'Google Chrome',
+      use: { ...devices['Desktop Chrome'], channel: 'chrome' },
     },
   ],
-  
-  // Web server configuration
-  webServer: [
-    // Start the API server
-    {
-      command: 'npm run dev',
-      cwd: './apps/api',
-      port: 3000,
-      timeout: 120000,
-      reuseExistingServer: !process.env.CI,
-      env: {
-        NODE_ENV: 'test',
-        USE_MOCK_AI: 'true',
-        PORT: '3000',
-      },
-    },
-    
-    // Start the frontend server
-    {
-      command: 'npm run dev',
-      cwd: './apps/dashboard-nextjs',
-      port: 3001,
-      timeout: 120000,
-      reuseExistingServer: !process.env.CI,
-      env: {
-        NODE_ENV: 'test',
-        NEXT_PUBLIC_API_URL: 'http://localhost:3000',
-        PORT: '3001',
-      },
-    },
-  ],
-  
-  // Test matching patterns
-  testMatch: [
-    '**/tests/e2e/**/*.spec.ts',
-    '**/tests/e2e/**/*.test.ts',
-  ],
-  
-  // Test ignore patterns
-  testIgnore: [
-    '**/node_modules/**',
-    '**/dist/**',
-    '**/build/**',
-  ],
-  
-  // Metadata
-  metadata: {
-    platform: process.platform,
-    nodeVersion: process.version,
-    testSuite: 'Prism Intelligence E2E Tests',
+
+  /* Run your local dev server before starting the tests */
+  webServer: {
+    command: 'npm run start:demo',
+    url: 'http://localhost:3000',
+    reuseExistingServer: !process.env.CI,
+    timeout: 120000,
   },
+  
+  /* Global test timeout */
+  timeout: 60000,
+  
+  /* Expect timeout for assertions */
+  expect: {
+    timeout: 10000,
+  },
+  
+  /* Output directory for test artifacts */
+  outputDir: '../coverage/playwright-artifacts',
 });

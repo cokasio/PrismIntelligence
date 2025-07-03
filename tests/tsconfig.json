@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "es2019",
+    "module": "commonjs",
+    "lib": ["es2019", "dom"],
+    "allowJs": true,
+    "declaration": false,
+    "outDir": null,
+    "rootDir": null,
+    "strict": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "types": ["jest", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["../apps/dashboard-nextjs/src/*"],
+      "@api/*": ["../apps/api/*"],
+      "@logic/*": ["../apps/logic-layer/*"],
+      "@rl/*": ["../apps/reinforcement-learning/*"],
+      "@agents/*": ["../apps/agent-coordination/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "../apps/**/*.ts",
+    "../types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "e2e"
+  ],
+  "ts-node": {
+    "esm": true
+  }
+}
